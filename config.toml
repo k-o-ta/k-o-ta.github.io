@@ -16,3 +16,4 @@ build_search_index = true
 [extra]
 # Put all your custom variables here
 
+analytics = "UA-172917470-1"

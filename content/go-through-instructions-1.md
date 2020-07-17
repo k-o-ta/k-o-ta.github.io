@@ -5,7 +5,7 @@ date = 2018-03-01
 tags = ["NES"]
 +++
 
-## Goal
+### Goal
 Go through all instructions in `sample1.nes`.
 
 CPU instruction is
@@ -15,7 +15,7 @@ CPU instruction is
 2. parse the instruction into OperationCode, AddressingMode, IndexRegister(optional).
 3. execute operation
 
-## fetch a instruction
+### fetch a instruction
 Fetching a instruction from `PrgRam` and address is indicated by ProgramCounter.
 
 `src/nes/cpu/mod.rs`
@@ -49,7 +49,7 @@ impl Cpu {
     }
 }
 ```
-## parse the instruction
+### parse the instruction
 Parsing the instruction is bit more complex. We have to know [OperationCode(OpCode)](http://wiki.nesdev.com/w/index.php/6502_instructions), [AddressingMode](http://wiki.nesdev.com/w/index.php/CPU_addressing_modes) and [IndexRegister](http://wiki.nesdev.com/w/index.php/CPU_registers).
 
 An instruction identify a set of OpCode, AddressingMode and IndexRegister.([ref](http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes))

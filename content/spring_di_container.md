@@ -1,0 +1,86 @@
++++
+title = "DI contaier in spring"
+date = 2020-08-18
+tags = []
++++
+
+## 実装を読んでDIコンテナの仕組みを知る
+利用例
+```java
+// DIコンテナからインスタンスを取得する例
+ApplicationContext = new AnnotationConfigAppricationContext(AppConfig.class);
+MyService myService = context.getBean(MyService.class);
+```
+
+```
+```
+
+登場人物
+* コンポーネント: アプリケーションのパーツ(リポジトリの実装とかアルゴリズムの実装とか)
+  * Springの世界ではBeanと呼ばれる(Bean定義じゃなくてBean実装)
+* DIコンテナ: コンポーネントを登録する場所
+  * Configuration: コンポーネントをDIコンテナに登録するときに使用される設定ファイル
+    * Springの世界ではBean定義と呼ばれる(なんで定義なのか。Bean登録ファイルとかで良いのでは?コンポーネントをbeanにするからbean定義ということなのだろうか)
+  * ApplicationContext: DIコンテナを触るためのインターフェース
+* アプリケーション: コンポーネントの利用者
+  * DIコンテナからBeanをルックアップする
+
+1. DIコンテナへbeanの登録を定義する(Configuration)
+beanの定義方法(beanの登録方法)
+* Java Config
+* XML Config
+* アノテーションベースConfig
+bean定義の例
+* JavaConfigの例
+```java
+@Configuration // configファイルであることの宣言
+@ComponentScan("com.myexmple.app") // 後述のコンポーネントスキャンをJavaConfigからも行える
+public class AppConfig {
+  @Bean // メソッド名: bean名, 返り値: beanのインスタンス
+  MyRepository myRepository () {
+    return new MyRepositoryImpl();
+  }
+  @Bean
+  MyService myService(MyRepository myRepository) { // 他のコンポーネントを注入できる
+    return new MyServiceImpl(myRepository);
+  }
+  @Bean
+  MyService myService2 () {
+    return new MyServiceImpl2(); // 同じインターフェースを満たした違う実装
+  }
+}
+```
+* XMLの例
+省略
+
+* アノテーションベースの例
+  * configurationファイルではなく、コンポーネントの実装ファイルにconfig用アノテーションを書くとコンポーネントスキャンされてDIコンテナに登録される
+```java
+package com.myexample.app
+
+@Component // @Componentアノテーションを付けるとコンポーネントスキャンの対象になる
+public class MyServiceImpl implements MyService {
+  @Autowired // 型が一致するBeanがDIコンテナにあったら注入する
+  public MyServiceImpl(MyRepository myRepository) {}
+}
+```
+
+2. ApplicationContextインスタンスの生成
+Configurationの方法によって生成方法が違う
+```java
+// Java Configを使った生成. @Configurationが付いていたらConfigファイルとして利用する
+ApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
+// XM Configを使った生成
+ApplicationContext applicationContext = new FileSystemXmlApplicationContext("./applicationContext.xml");
+// アノテーションベースConfigを使った生成. package配下をコンポーネントスキャンする
+ApplicationContext applicationContext = new AnnotationConfigApplicationContext("com.myexample.app")
+```
+
+3. DIコンテナからbeanを取得する
+ルックアップの方法
+* 取得するBeanの名前を指定する(`applicationContext.getBean("myService");`)
+  * Object型で取得されるので嬉しくない
+* 取得するBeanの型を指定する(`applicationContext.getBean(MyService.class);`)
+  * 指定する型のBeanが一つだけのとき使える
+* 取得するBeanの名前と型を指定する(`applicationContext.getBean("myService", MyService.class);`)
+  * 指定する型のBeanが複数存在する場合に使う

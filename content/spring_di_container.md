@@ -20,7 +20,7 @@ MyService myService = context.getBean(MyService.class);
   * Springの世界ではBeanと呼ばれる(Bean定義じゃなくてBean実装)
 * DIコンテナ: コンポーネントを登録する場所
   * Configuration: コンポーネントをDIコンテナに登録するときに使用される設定ファイル
-    * Springの世界ではBean定義と呼ばれる(なんで定義なのか。Bean登録ファイルとかで良いのでは?コンポーネントをbeanにするからbean定義ということなのだろうか)
+    * Springの世界ではBean定義と呼ばれる(なんで定義なのか。Bean登録ファイルとかで良いのでは?コンポーネントはただのjavaのクラスファイルで、beanという形にするとspringのDIコンテナに載せられるコンポーネントになる?コンポーネントをbeanにするからbean定義ということなのだろうか)
   * ApplicationContext: DIコンテナを触るためのインターフェース
 * アプリケーション: コンポーネントの利用者
   * DIコンテナからBeanをルックアップする
@@ -84,3 +84,69 @@ ApplicationContext applicationContext = new AnnotationConfigApplicationContext("
   * 指定する型のBeanが一つだけのとき使える
 * 取得するBeanの名前と型を指定する(`applicationContext.getBean("myService", MyService.class);`)
   * 指定する型のBeanが複数存在する場合に使う
+
+Spring bootのAutoConfigure
+beanの定義とかが不要になる。
+@SpringBootApplicationをつけると、@Configurationと@EnableAutoConfigurationと@ComponentScanの組み合わせが付与され、そのクラスがconfiguratoinクラスになり、@BeanアノテーションでBean定義でき、クラス配下のパッケージがコンポーネントスキャン対象になる。
+
+@ComponentScanの実装を読む
+
+Spring bootじゃないとき
+`ApplicationContext applicationContext = new AnnotationConfigApplicationContext("com.myexample.app")
+`を呼ぶ場合,
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/AnnotationConfigApplicationContext.java#L100
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ClassPathBeanDefinitionScanner.java#L251
+
+
+Spring bootだったり、@ComponentScanを使っていたりするとき
+```java
+SpringApplication.run
+  ConfigurableApplicationContext context = null;
+  context = this.createApplicationContext();
+  this.prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+  this.refreshContext(context);
+    this.refresh(context);
+      Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
+      ((AbstractApplicationContext)applicationContext).refresh();
+```
+
+```java
+AbstractApplicationContext#refresh
+  AbstractApplicationContext#invokeBeanFactoryPostProcessors
+AbstractApplicationContext#invokeBeanFactoryPostProcessors
+  PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
+PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors
+  invokeBeanFactoryPostProcessors
+    postProcessBeanFactory
+```
+
+postProcessBeanDefinitionRegistry
+postProcessBeanFactory
+
+
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassPostProcessor.java#L265
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassPostProcessor.java#L319
+
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L169
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L195-L207
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L224
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L249
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L265-L266
+// Process any @ComponentScan annotations
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L287-L289
+// The config class is annotated with @ComponentScan -> perform the scan immediately
+```java
+Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
+				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
+```
+
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L293-L295
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ComponentScanAnnotationParser.java#L132
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ClassPathBeanDefinitionScanner.java#L276
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ClassPathBeanDefinitionScanner.java#L285
+https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ClassPathBeanDefinitionScanner.java#L289-L292
+registerBeanDefinitionと返り値のbeanDefinitionsのどちらが重要なのか?
+
+
+
+autoconfigureの実装を読む

@@ -4,7 +4,63 @@ date = 2020-08-18
 tags = []
 +++
 
-## 実装を読んでDIコンテナの仕組みを知る
+# spring boot ソースコードリーディング(コンポーネントスキャン)
+spring bootを使うにあたってコンポーネントスキャン周りを理解したかった
+
+## 登場人物
+* コンポーネント: アプリケーションのパーツ(リポジトリの実装とかアルゴリズムの実装とか)
+  * Springの世界ではDIコンテナで管理されているコンポーネントはBeanと呼ばれる(Bean定義じゃなくてBean実装)
+* DIコンテナ: コンポーネントを登録する場所
+  * Configuration: コンポーネントをDIコンテナに登録するときに使用される設定ファイル
+    * Springの世界ではBean定義と呼ばれる
+      * コンポーネントを実装しているコードをBean定義と呼べばいいのにと思ったが、[beanはmetadataとともに生成される](https://www.tutorialspoint.com/spring/spring_bean_definition.htm)とのことで、コンポーネント(POJO)をDIコンテナから使えるようにbeanとして定義するconfigurationのことをBean定義と呼ぶと理解した。
+  * ApplicationContext: DIコンテナを触るためのインターフェース
+* アプリケーション: コンポーネントの利用者
+  * DIコンテナからBeanをルックアップする
+
+spring bootのエントリーポイント
+```java
+// SpringBootMyApplication.java
+@SpringBootApplication
+public class SpringBootMyApplication {
+  public static void main(String[] args) {
+    SpringApplication.run(SpringBootMyApplication.class, args);
+  }
+}
+```
+
+
+spring bootでは`@SpringBootApplication`アノテーションが重要な役割を持つ([ソース](https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/SpringBootApplication.java))
+```java
+// SpringBootApplication.java
+// 省略
+@ComponentScan
+// 省略
+public @interface SpringBootApplication {
+  // 省略
+}
+```
+`@SpringBootApplication`は`@ComponentScan`を継承している。`@CompnenntScan`はSpringで定義されており、はvalue属性に指定したパッケージ(デフォルトでは付与されたクラスと同じパッケージ)配下のコンポーネントをスキャンしてBeanとして登録できる。たとえば、以下のように書く
+```java
+@Configuration // configファイルであることの宣言
+@ComponentScan("com.myexmple.app") // コンポーネントスキャン
+public class AppConfig {
+  @Bean // メソッド名: bean名, 返り値: beanのインスタンス
+  MyRepository myRepository () {
+    return new MyRepositoryImpl();
+  }
+  @Bean
+  MyService myService(MyRepository myRepository) { // 他のコンポーネントを注入できる
+    return new MyServiceImpl(myRepository);
+  }
+  @Bean
+  MyService myService2 () {
+    return new MyServiceImpl2(); // 同じインターフェースを満たした違う実装
+  }
+}
+```
+ConfigurationはBean定義でもあるので`@Bean`というアノテーションを付けるとコンポーネントスキャンしたファイルをBeanとしてDIコンテナに登録してくれるが、Spring BootではコンポーネントのPOJOに`@Component`のようなアノテーションを付けることでConfiguration側で`@Bean`を用いたメソッドを作らなくてもDIコンテナに登録されるようになる。(この仕組はSpringのもの)
+
 利用例
 ```java
 // DIコンテナからインスタンスを取得する例
@@ -15,15 +71,6 @@ MyService myService = context.getBean(MyService.class);
 ```
 ```
 
-登場人物
-* コンポーネント: アプリケーションのパーツ(リポジトリの実装とかアルゴリズムの実装とか)
-  * Springの世界ではBeanと呼ばれる(Bean定義じゃなくてBean実装)
-* DIコンテナ: コンポーネントを登録する場所
-  * Configuration: コンポーネントをDIコンテナに登録するときに使用される設定ファイル
-    * Springの世界ではBean定義と呼ばれる(なんで定義なのか。Bean登録ファイルとかで良いのでは?コンポーネントはただのjavaのクラスファイルで、beanという形にするとspringのDIコンテナに載せられるコンポーネントになる?コンポーネントをbeanにするからbean定義ということなのだろうか)
-  * ApplicationContext: DIコンテナを触るためのインターフェース
-* アプリケーション: コンポーネントの利用者
-  * DIコンテナからBeanをルックアップする
 
 1. DIコンテナへbeanの登録を定義する(Configuration)
 beanの定義方法(beanの登録方法)
@@ -150,3 +197,4 @@ registerBeanDefinitionと返り値のbeanDefinitionsのどちらが重要なの�
 
 
 autoconfigureの実装を読む
+

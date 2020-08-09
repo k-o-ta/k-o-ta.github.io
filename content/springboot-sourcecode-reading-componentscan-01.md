@@ -1,7 +1,8 @@
 +++
 title = "Spring bootのコンポーネントスキャンのソースコードリーディングのログ"
 date = 2020-08-10
-tags = []
+[taxonomies]
+tags = ["java", "springboot", "spring", "componentscan"]
 +++
 
 spring bootを使うにあたってコンポーネントスキャン周りを理解したかった

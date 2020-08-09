@@ -2,6 +2,7 @@
 title = "js identifier"
 date = 2020-08-18
 tags = []
+draft = true
 +++
 http://unicode.org/reports/tr31/tr31-5.html#Default_Identifier_Syntax 記法
 <identifier> := <ID_Start> <ID_Continue>*

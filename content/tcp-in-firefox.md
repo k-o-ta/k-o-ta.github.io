@@ -2,6 +2,7 @@
 title = "TCP/IP in Firefox"
 date = 2020-07-18
 tags = []
+draft = true
 +++
 
 ### 目的

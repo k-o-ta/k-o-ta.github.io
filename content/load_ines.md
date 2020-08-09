@@ -5,26 +5,26 @@ date = 2018-02-28
 tags = ["NES"]
 +++
 
-### First of all
+## First of all
 NES is Nintendo Entertainment System a.k.a. 'ファミコン'.
 My goal is developing NES simulator using Rust language.
 Reference guide is [here](http://wiki.nesdev.com/w/index.php/NES_reference_guide).
 
 NES consists of some parts. For example CPU, PPU, APU and so on. I start from loading iNES file,  which is a format of NES binary programs. You can check iNES format [here](http://wiki.nesdev.com/w/index.php/INES).
 
-### Two parts of iNES
+## Two parts of iNES
 iNES have two parts. PRG_ROM and CHR_ROM. PRG_ROM is for game logic and CHR_ROM is for graphic. When iNES is loaded, PRG_RAM load PRG_ROM data and V_RAM load CHR_ROM.
 
-### PRG_RAM and V_RAM
+## PRG_RAM and V_RAM
 PRG_RAM and V_RAM has 2KB memory.
 
-### init project
+## init project
 ~~~
 % cargo init --bin nes
 % cd nes
 ~~~
 
-### nes module
+## nes module
 This is the today's directory structure.
 ~~~
 % tree
@@ -39,7 +39,7 @@ This is the today's directory structure.
         └── mod.rs
 ~~~
 
-#### CPU
+### CPU
 `src/nes/cpu/mod.rs`
 ```rust
 /// [CPU](http://wiki.nesdev.com/w/index.php/CPU)
@@ -68,7 +68,7 @@ impl PrgRam {
 ```
 PrgRam doesn't have to has VRam at this time, but We need it on a further section.
 
-#### PPU
+### PPU
 `src/nes/ppu/mod.rs`
 ```rust
 /// [PPU](http://wiki.nesdev.com/w/index.php/PPU) is short for Picture Processing Unit
@@ -91,7 +91,7 @@ impl VRam {
     }
 }
 ```
-#### NES
+### NES
 `src/nes/mod.rs`
 ``` rust
 mod cpu;
@@ -197,7 +197,7 @@ impl Nes {
 3. Load PRG ROM data to PrgRam.
 4. Load CHR ROM data to VRam.
 
-### dump
+## dump
 Dump PrgRam and VRam to check they store data.
 ```rust
 // src/nes/cpu/mod.rs

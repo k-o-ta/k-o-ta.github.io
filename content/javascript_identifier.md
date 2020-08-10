@@ -1,9 +1,9 @@
 +++
 title = "jsの変数命の規則"
 date = 2020-08-11
+draft = true
 [taxonomies]
 tags = ["javascript"]
-draft = true
 +++
 
 [ECMAScriptの定義](https://www.ecma-international.org/ecma-262/#prod-IdentifierName)を参照

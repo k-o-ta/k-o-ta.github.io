@@ -1,5 +1,5 @@
 +++
-title = "load iNES"
+title = "Implementation NES by Rust - load iNES"
 description = "Load iNES file to NES"
 date = 2018-02-28
 tags = ["NES"]

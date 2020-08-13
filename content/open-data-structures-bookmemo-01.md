@@ -1,8 +1,7 @@
 +++
 title = "みんなのデータ構造読書メモ 第一章(1)"
-date = 2020-08-18
-tags = []
-draft = true
+date = 2020-08-14
+tags = ["algorithm", "data structure"]
 +++
 
 ## 第1章
@@ -35,3 +34,11 @@ draft = true
 
 #### 1.3.3 漸近記法
 ビッグオー記法は今までなんとなく使っていたが正しい定義は初めて見た。{% katex(block=false) %}O(f(n)){% end %}は集合を表していて、nがある程度より大きいときは定数倍しても常に{% katex(block=false) %}f(n){% end %}より小さくなる関数の集合、というような意味合いだった。{% katex(block=false) %}f(n){% end %}はどんな関数でも構わないはずだが、アルゴリズムの世界でよく使われるのが{% katex(block=false) %}\alpha{% end %}(定数)、 {% katex(block=false) %}\log n{% end %}、{% katex(block=false) %}n^b{% end %}、{% katex(block=false) %}c^n{% end %}などなのだろう。ある関数が{% katex(block=false) %}O(f(n)){% end %}に含まれるということは定数倍しても{% katex(block=false) %}f(n){% end %}に満たなく、ある関数とはアルゴリズムの世界では例えば実行時間である。つまり実行時間を表す関数が{% katex(block=false) %}O(f(n)){% end %}に含まれるということは、最悪でも{% katex(block=false) %}f(n){% end %}内には実行完了するし、{% katex(block=false) %}f(n){% end %}に含まれる関数の間での実行時間の差は大きくても定数倍なので丸めて{% katex(block=false) %}O(f(n)){% end %}で同じ、といってしまって良いよね、ということである。
+
+#### 1.3.4 ランダム性と確率
+* コインをk回投げたときの表が出る回数の期待値を期待値の定義を使って求めている。{% katex(block=false) %}\dbinom{k}{i}{% end %}は
+{% katex(block=true) %}{}_k C _i{% end %}
+のようである。
+二項係数の性質{% katex(block=false) %}i\dbinom{k}{i} = k\dbinom{k-1}{i-1}{% end %}も、
+{% katex(block=true) %} {}_k C_i = k{}_{k-1} C_{i-1}{% end %}
+で表される。

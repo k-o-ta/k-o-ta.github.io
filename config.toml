@@ -16,5 +16,6 @@ build_search_index = true
 
 [extra]
 # Put all your custom variables here
+katex_enable = true
 
 analytics = "UA-172917470-1"

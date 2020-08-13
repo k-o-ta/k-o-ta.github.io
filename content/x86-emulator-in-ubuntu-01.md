@@ -15,6 +15,8 @@ gccコマンドは以下。`-m32` で32bitバイナリにコンパイルされ�
 gcc -Wl,--entry=func,--oformat=binary -nostdlib -fno-asynchronous-unwind-tables -m32 -o casm-c-sample.bin casm-c-sample.c
 ~~~
 
+<!-- more -->
+
 ndisasmはapt-getでnasmをinstallすると一緒に入ってくる
 ~~~
 sudo apt-get install nasm

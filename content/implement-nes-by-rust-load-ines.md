@@ -8,6 +8,7 @@ tags = ["NES"]
 ## First of all
 NES is Nintendo Entertainment System a.k.a. 'ファミコン'.
 My goal is developing NES simulator using Rust language.
+<!-- more -->
 Reference guide is [here](http://wiki.nesdev.com/w/index.php/NES_reference_guide).
 
 NES consists of some parts. For example CPU, PPU, APU and so on. I start from loading iNES file,  which is a format of NES binary programs. You can check iNES format [here](http://wiki.nesdev.com/w/index.php/INES).

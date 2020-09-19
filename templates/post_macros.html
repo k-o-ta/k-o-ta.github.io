@@ -1,0 +1,8 @@
+{% macro title(page) %}
+    <span>
+        <time datetime="{{ page.date | date(format="%F") | safe }}">
+            {{ page.date | date(format="%F") }}
+        </time>
+    </span>
+    <a href="{{ page.permalink }}">{{ page.title }}</a>
+{% endmacro title %}

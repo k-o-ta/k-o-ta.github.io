@@ -1,6 +1,7 @@
 +++
 title = "みんなのデータ構造読書メモ 第一章(2)"
 date = 2020-08-19
+[taxonomies]
 tags = ["algorithm", "data structure"]
 +++
 

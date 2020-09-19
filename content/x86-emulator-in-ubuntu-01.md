@@ -2,6 +2,7 @@
 title = "自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める"
 description = "x86-emulator-in-ubuntu"
 date = 2018-05-27
+[taxonomies]
 tags = ["x86-emulator"]
 +++
 

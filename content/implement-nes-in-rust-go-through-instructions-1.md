@@ -2,6 +2,7 @@
 title = "Implementation NES by Rust - Go Through Instructions 1"
 description = "Go Through Instructions 1"
 date = 2018-03-01
+[taxonomies]
 tags = ["NES"]
 +++
 

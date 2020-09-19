@@ -26,6 +26,18 @@
   </nav>
 {% endblock %}
 
+{% block footer -%}
+    <p class="tags">
+        <span><a href=/tags>tags</a></span>
+    </p>
+<p class="p-copyright">
+    {% if config.extra.copyright -%}
+    {% set content = config.extra.copyright | markdown(inline=true) %}
+    {{ post_macros::polish(content=content) }}
+    {%- endif %}
+</p>
+{%- endblock footer %}
+
 {% block extra_head -%}
     <link rel="stylesheet" href="{{ get_url(path="index.css") }}" />
 {%- endblock extra_head %}

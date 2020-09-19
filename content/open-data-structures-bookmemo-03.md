@@ -1,8 +1,9 @@
 +++
 title = "みんなのデータ構造読書メモ 第一章(3)"
 date = 2020-08-19
-tags = ["algorithm", "data structure"]
 draft = true
+[taxonomies]
+tags = ["algorithm", "data structure"]
 +++
 
 ### 練習問題

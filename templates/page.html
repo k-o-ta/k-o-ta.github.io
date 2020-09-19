@@ -1,0 +1,23 @@
+{% extends "zola-pickles/templates/page.html" %}
+{% block extra_head -%}
+    <link rel="stylesheet" href="{{ get_url(path="page.css") }}" />
+{%- endblock extra_head %}
+
+{% block footer -%}
+    {% for category, values in page.taxonomies %}
+        {% if category == "tags"-%}
+            <p class="tags">
+              {% for tag in values %}
+                  {% set url = get_taxonomy_url(kind=category, name=tag, lang=page.lang) %}
+                  <span><a href="{{ url | safe }}">{{ tag }}</a></span>
+              {% endfor %}
+            </p>
+        {%- endif %}
+    {% endfor %}
+<p class="p-copyright">
+    {% if config.extra.copyright -%}
+    {% set content = config.extra.copyright | markdown(inline=true) %}
+    {{ post_macros::polish(content=content) }}
+    {%- endif %}
+</p>
+{%- endblock footer %}

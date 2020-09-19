@@ -1,6 +1,7 @@
 +++
 title = "Railsでresolvを使うときにrequireするか"
 date = 2020-08-24
+[taxonomies]
 tags = ["Ruby", "Ruby on Rails"]
 +++
 

@@ -1,0 +1,14 @@
+{% import "my_post_macros.html" as my_post_macros %}
+{% extends "zola-pickles/templates/index.html" %}
+
+{% block content %}
+    <h1>{{ term.name }}</h1>
+
+  <ul>
+    {% for page in term.pages %}
+    <li class="c-article p-my-list-article">
+        {{ my_post_macros::title(page=page) }}
+    </li>
+    {% endfor %}
+  </ul>
+{% endblock content %}

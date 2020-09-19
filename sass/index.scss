@@ -1,0 +1,12 @@
+.p-my-list-article {
+  margin-top: 15px;
+  &:first-child {
+    margin-top: 0;
+  }
+  &__btn {
+    margin-top: 16px;
+  }
+  time {
+    font-size:13px;
+  }
+}

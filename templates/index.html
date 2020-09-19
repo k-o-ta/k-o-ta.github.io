@@ -1,10 +1,10 @@
-{% import "post_macros.html" as post_macros %}
+{% import "my_post_macros.html" as my_post_macros %}
 {% extends "zola-pickles/templates/index.html" %}
 {% block content %}
   <ul>
     {% for page in paginator.pages %}
     <li class="c-article p-my-list-article">
-        {{ post_macros::title(page=page) }}
+        {{ my_post_macros::title(page=page) }}
     </li>
     {% endfor %}
   </ul>

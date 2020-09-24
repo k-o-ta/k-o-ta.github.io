@@ -3,9 +3,11 @@
   font-size:15px;
 }
 
-p code {
-  background-color: #f7f3f3;
-  border-radius: 5px;
-  white-space: pre-wrap;
-  padding: 3px;
+p, li {
+  code {
+    background-color: #f7f3f3;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    padding: 3px;
   }
+}

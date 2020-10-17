@@ -3,7 +3,7 @@ title = "Scheme手習い読書メモ"
 date = 2020-10-01
 draft = true
 [taxonomies]
-tags = [book, schemer]
+tags = ["books", "schemer"]
 +++
 
 [Scheme手習い](https://www.ohmsha.co.jp/book/9784274068263/)を読んだ。社内にいるLisperと一緒に読み進めていったので、困ったときに訊いたりできて助かった。

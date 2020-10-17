@@ -2,7 +2,7 @@
 title = "intelliJ IDEAを使ったsolr pluginのデバッグ"
 date = 2020-09-24
 [taxonomies]
-tags = ["solr", "intelliJ"]
+tags = ["solr", "intelliJ", "java"]
 +++
 
 solrのプラグイン開発を行うときにintelliJ IDEAを使ってdebugを行う方法

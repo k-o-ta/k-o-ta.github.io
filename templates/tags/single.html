@@ -12,3 +12,13 @@
     {% endfor %}
   </ul>
 {% endblock content %}
+
+{% block footer -%}
+    <p class="tags">
+        <span><a href=/tags>tags</a></span>
+    </p>
+{%- endblock footer %}
+
+{% block extra_head -%}
+    <link rel="stylesheet" href="{{ get_url(path="index.css") }}" />
+{%- endblock extra_head %}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Implementation NES by Rust - load iNES | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Implementation NES by Rust - load iNES | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Implementation NES by Rust - load iNES | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;fontawesome.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;brands.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https:&#x2F;&#x2F;k-ota.dev&#x2F;favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Implementation NES by Rust - load iNES</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2018-02-28">
+                    2018-02-28
+                </time>
+                
+                 - (5 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="first-of-all">First of all<a class="zola-anchor" href="#first-of-all" aria-label="Anchor link for: first-of-all"><i class="fas fa-link"></i></a> 
+</h2>
+<p>NES is Nintendo Entertainment System a.k.a. 'ファミコン'.
+My goal is developing NES simulator using Rust language.</p>
+<span id="continue-reading"></span>
+<p>Reference guide is <a href="http://wiki.nesdev.com/w/index.php/NES_reference_guide">here</a>.</p>
+<p>NES consists of some parts. For example CPU, PPU, APU and so on. I start from loading iNES file,  which is a format of NES binary programs. You can check iNES format <a href="http://wiki.nesdev.com/w/index.php/INES">here</a>.</p>
+<h2 id="two-parts-of-ines">Two parts of iNES<a class="zola-anchor" href="#two-parts-of-ines" aria-label="Anchor link for: two-parts-of-ines"><i class="fas fa-link"></i></a> 
+</h2>
+<p>iNES have two parts. PRG_ROM and CHR_ROM. PRG_ROM is for game logic and CHR_ROM is for graphic. When iNES is loaded, PRG_RAM load PRG_ROM data and V_RAM load CHR_ROM.</p>
+<h2 id="prg-ram-and-v-ram">PRG_RAM and V_RAM<a class="zola-anchor" href="#prg-ram-and-v-ram" aria-label="Anchor link for: prg-ram-and-v-ram"><i class="fas fa-link"></i></a> 
+</h2>
+<p>PRG_RAM and V_RAM has 2KB memory.</p>
+<h2 id="init-project">init project<a class="zola-anchor" href="#init-project" aria-label="Anchor link for: init-project"><i class="fas fa-link"></i></a> 
+</h2>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">% cargo init --bin nes
+% cd nes
+</span></code></pre><h2 id="nes-module">nes module<a class="zola-anchor" href="#nes-module" aria-label="Anchor link for: nes-module"><i class="fas fa-link"></i></a> 
+</h2>
+<p>This is the today's directory structure.</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">% tree
+.
+├── lib.rs
+├── main.rs
+└── nes
+    ├── cpu
+    │   └── mod.rs
+    ├── mod.rs
+    └── ppu
+        └── mod.rs
+</span></code></pre><h3 id="cpu">CPU<a class="zola-anchor" href="#cpu" aria-label="Anchor link for: cpu"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#65737e;">/// [CPU](http://wiki.nesdev.com/w/index.php/CPU)
+</span><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">Cpu {
+    </span><span style="color:#bf616a;">prg_ram</span><span style="color:#c0c5ce;">: PrgRam,
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Cpu {
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">prg_ram</span><span style="color:#c0c5ce;">: PrgRam) -&gt; Cpu {
+        Cpu { prg_ram }
+    }
+}
+
+</span><span style="color:#65737e;">/// [CPU memory](http://wiki.nesdev.com/w/index.php/CPU_memory_map)
+/// RAM is 2KB.
+</span><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">PrgRam {
+    </span><span style="color:#bf616a;">memory</span><span style="color:#c0c5ce;">: Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#d08770;">0xFFFF</span><span style="color:#c0c5ce;">]&gt;,
+    </span><span style="color:#bf616a;">v_ram</span><span style="color:#c0c5ce;">: Arc&lt;Mutex&lt;VRam&gt;&gt;,
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">PrgRam {
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">memory</span><span style="color:#c0c5ce;">: Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#d08770;">0xFFFF</span><span style="color:#c0c5ce;">]&gt;, </span><span style="color:#bf616a;">v_ram</span><span style="color:#c0c5ce;">: Arc&lt;Mutex&lt;VRam&gt;&gt;) -&gt; PrgRam {
+        PrgRam { memory, v_ram }
+    }
+}
+</span></code></pre>
+<p>PrgRam doesn't have to has VRam at this time, but We need it on a further section.</p>
+<h3 id="ppu">PPU<a class="zola-anchor" href="#ppu" aria-label="Anchor link for: ppu"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>src/nes/ppu/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#65737e;">/// [PPU](http://wiki.nesdev.com/w/index.php/PPU) is short for Picture Processing Unit
+</span><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">Ppu {
+    </span><span style="color:#bf616a;">v_ram</span><span style="color:#c0c5ce;">: Arc&lt;Mutex&lt;VRam&gt;&gt;,
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Ppu {
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">v_ram</span><span style="color:#c0c5ce;">: Arc&lt;Mutex&lt;VRam&gt;&gt;) -&gt; Ppu {
+        Ppu { v_ram }
+    }
+}
+
+</span><span style="color:#65737e;">/// [PPU memory](http://wiki.nesdev.com/w/index.php/PPU_memory_map)
+/// RAM is 2KB.
+</span><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">VRam(Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#d08770;">0xFFFF</span><span style="color:#c0c5ce;">]&gt;);
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">VRam {
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">memory</span><span style="color:#c0c5ce;">: Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#d08770;">0xFFFF</span><span style="color:#c0c5ce;">]&gt;) -&gt; VRam {
+        VRam(memory)
+    }
+}
+</span></code></pre><h3 id="nes">NES<a class="zola-anchor" href="#nes" aria-label="Anchor link for: nes"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>src/nes/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#b48ead;">mod </span><span style="color:#c0c5ce;">cpu;
+</span><span style="color:#b48ead;">mod </span><span style="color:#c0c5ce;">ppu;
+
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">std::fs::File;
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">std::path::Path;
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">std::io::{BufReader, Read};
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">std::sync::{Arc, Mutex};
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">nes::cpu::{Cpu, PrgRam};
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">nes::ppu::{Ppu, VRam};
+
+</span><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">Nes {
+    </span><span style="color:#bf616a;">cpu</span><span style="color:#c0c5ce;">: Cpu,
+    </span><span style="color:#bf616a;">ppu</span><span style="color:#c0c5ce;">: Ppu,
+}
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Nes {
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">I_NES_HEADER_SIZE</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0x0010</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">COUNT_OF_PRG_ROM_UNITS_INDEX</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">4</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">COUNT_OF_CHR_ROM_UNITS_INDEX</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">5</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0x4000</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">SIZE_OF_CHR_ROM_UNIT</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0x2000</span><span style="color:#c0c5ce;">;
+
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">RAM_SIZE</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0x10000</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">PRG_ROM_LOWER_IDX</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0x8000</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">const </span><span style="color:#d08770;">PRG_ROM_UPPER_IDX</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">= </span><span style="color:#d08770;">0xC000</span><span style="color:#c0c5ce;">;
+
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">casette_name</span><span style="color:#c0c5ce;">: &amp;</span><span style="color:#b48ead;">str</span><span style="color:#c0c5ce;">) -&gt; Nes {
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> path_string = format!(&quot;</span><span style="color:#a3be8c;">cassette/</span><span style="color:#d08770;">{}</span><span style="color:#c0c5ce;">&quot;, String::from(casette_name));
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> path = Path::new(&amp;path_string);
+
+        </span><span style="color:#b48ead;">let </span><span style="color:#c0c5ce;">(prg_ram, v_ram) = </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::load_ram(path);
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> cpu = Cpu::new(prg_ram);
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> ppu = Ppu::new(v_ram.</span><span style="color:#96b5b4;">clone</span><span style="color:#c0c5ce;">());
+
+        Nes { cpu, ppu }
+    }
+
+    </span><span style="color:#65737e;">/// load [iNES](http://wiki.nesdev.com/w/index.php/INES)
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">load_ram</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">path</span><span style="color:#c0c5ce;">: &amp;Path) -&gt; (PrgRam, Arc&lt;Mutex&lt;VRam&gt;&gt;) {
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> file = </span><span style="color:#b48ead;">match </span><span style="color:#c0c5ce;">File::open(path) {
+            Ok(file) =&gt; file,
+            Err(why) =&gt; panic!(&quot;</span><span style="color:#a3be8c;">{}: path is {:?}</span><span style="color:#c0c5ce;">&quot;, why, path),
+        };
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> buffer = BufReader::new(file);
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> i_nes_data: Vec&lt;</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">&gt; = Vec::new();
+        </span><span style="color:#b48ead;">let </span><span style="color:#c0c5ce;">_ = buffer.</span><span style="color:#96b5b4;">read_to_end</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#b48ead;">mut</span><span style="color:#c0c5ce;"> i_nes_data).</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">();
+
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> prg_rom_start = </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">I_NES_HEADER_SIZE</span><span style="color:#c0c5ce;">;
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> prg_rom_end = prg_rom_start +
+            i_nes_data[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">COUNT_OF_PRG_ROM_UNITS_INDEX </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">] as </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">* </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT </span><span style="color:#c0c5ce;">- </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> chr_rom_banks_num = i_nes_data[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">COUNT_OF_CHR_ROM_UNITS_INDEX </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">];
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> chr_rom_start = prg_rom_end + </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> chr_rom_end = chr_rom_start + chr_rom_banks_num as </span><span style="color:#b48ead;">u16 </span><span style="color:#c0c5ce;">* </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_CHR_ROM_UNIT </span><span style="color:#c0c5ce;">- </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+
+        </span><span style="color:#65737e;">// set prg_ram_memory
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> prg_rom: Vec&lt;</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">&gt; = Vec::new();
+        prg_rom.</span><span style="color:#96b5b4;">extend_from_slice</span><span style="color:#c0c5ce;">(
+            &amp;i_nes_data[(prg_rom_start as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)..(prg_rom_end as </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">+ </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">)],
+        );
+
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> prg_ram_memory: Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#bf616a;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#bf616a;">RAM_SIZE</span><span style="color:#c0c5ce;">]&gt; = Box::new([</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">RAM_SIZE</span><span style="color:#c0c5ce;">]);
+        prg_ram_memory[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">PRG_ROM_LOWER_IDX</span><span style="color:#c0c5ce;">..</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">PRG_ROM_UPPER_IDX</span><span style="color:#c0c5ce;">]
+            .</span><span style="color:#96b5b4;">clone_from_slice</span><span style="color:#c0c5ce;">(&amp;prg_rom[..(</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)]);
+
+        </span><span style="color:#b48ead;">match</span><span style="color:#c0c5ce;"> i_nes_data[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">COUNT_OF_PRG_ROM_UNITS_INDEX </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">] {
+            </span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">=&gt; {
+                prg_ram_memory[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">PRG_ROM_UPPER_IDX</span><span style="color:#c0c5ce;">..].</span><span style="color:#96b5b4;">clone_from_slice</span><span style="color:#c0c5ce;">(
+                    &amp;prg_rom[..(</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)],
+                );
+
+            }
+            </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">...</span><span style="color:#d08770;">255 </span><span style="color:#c0c5ce;">=&gt; {
+                prg_ram_memory[</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">PRG_ROM_UPPER_IDX</span><span style="color:#c0c5ce;">..].</span><span style="color:#96b5b4;">clone_from_slice</span><span style="color:#c0c5ce;">(
+                    &amp;prg_rom[(</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)..(</span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">SIZE_OF_PRG_ROM_UNIT </span><span style="color:#c0c5ce;">as </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">* </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">)],
+                );
+            }
+            _ =&gt; {}
+        }
+
+        </span><span style="color:#65737e;">// set v_ram_memory
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> v_ram_memory: Box&lt;[</span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">; </span><span style="color:#bf616a;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#bf616a;">RAM_SIZE</span><span style="color:#c0c5ce;">]&gt; = Box::new([</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; </span><span style="color:#b48ead;">Self</span><span style="color:#c0c5ce;">::</span><span style="color:#d08770;">RAM_SIZE</span><span style="color:#c0c5ce;">]);
+        v_ram_memory[..(chr_rom_end as </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">+ </span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">- chr_rom_start as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)].</span><span style="color:#96b5b4;">clone_from_slice</span><span style="color:#c0c5ce;">(
+            &amp;i_nes_data[(chr_rom_start as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">)..(chr_rom_end as </span><span style="color:#b48ead;">usize </span><span style="color:#c0c5ce;">+ </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">)],
+        );
+
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> v_ram = Arc::new(Mutex::new(VRam::new(v_ram_memory)));
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> prg_ram = PrgRam::new(prg_ram_memory, v_ram.</span><span style="color:#96b5b4;">clone</span><span style="color:#c0c5ce;">());
+
+        (prg_ram, v_ram)
+    }
+}
+
+</span></code></pre>
+<p><code>load_ram</code> method is today's main topic.</p>
+<ol>
+<li>Parse an iNES format file.</li>
+<li>Check the header.</li>
+</ol>
+<ul>
+<li>4th Byte in the header means count of PRG ROM <em>units</em>.
+<ul>
+<li>A PRG ROM unit is 16KB.</li>
+</ul>
+</li>
+<li>5th Byte in the header means count of CHR ROM <em>units</em>.
+<ul>
+<li>A CHR ROM unit is 8KB.</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Load PRG ROM data to PrgRam.</li>
+<li>Load CHR ROM data to VRam.</li>
+</ol>
+<h2 id="dump">dump<a class="zola-anchor" href="#dump" aria-label="Anchor link for: dump"><i class="fas fa-link"></i></a> 
+</h2>
+<p>Dump PrgRam and VRam to check they store data.</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#65737e;">// src/nes/cpu/mod.rs
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Cpu {
+    #[</span><span style="color:#bf616a;">allow</span><span style="color:#c0c5ce;">(dead_code)]
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">dump</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.prg_ram.</span><span style="color:#96b5b4;">dump</span><span style="color:#c0c5ce;">();
+    }
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">PrgRam {
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">dump</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> dump_file = &quot;</span><span style="color:#a3be8c;">prg_ram.dump</span><span style="color:#c0c5ce;">&quot;;
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> f = BufWriter::new(File::create(dump_file).</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">());
+        </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;"> v in </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.memory.</span><span style="color:#96b5b4;">iter</span><span style="color:#c0c5ce;">() {
+            f.</span><span style="color:#96b5b4;">write</span><span style="color:#c0c5ce;">(&amp;[*v]).</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">();
+        }
+    }
+}
+
+
+</span><span style="color:#65737e;">// src/nes/ppu/mod.rs
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Ppu {
+    #[</span><span style="color:#bf616a;">allow</span><span style="color:#c0c5ce;">(dead_code)]
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">dump</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.v_ram.</span><span style="color:#96b5b4;">lock</span><span style="color:#c0c5ce;">().</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">().</span><span style="color:#96b5b4;">dump</span><span style="color:#c0c5ce;">();
+    }
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">VRam {
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">dump</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> dump_file = &quot;</span><span style="color:#a3be8c;">v_ram.dump</span><span style="color:#c0c5ce;">&quot;;
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> f = BufWriter::new(File::create(dump_file).</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">());
+        </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;"> v in </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#d08770;">0.</span><span style="color:#96b5b4;">iter</span><span style="color:#c0c5ce;">() {
+            f.</span><span style="color:#96b5b4;">write</span><span style="color:#c0c5ce;">(&amp;[*v]).</span><span style="color:#96b5b4;">unwrap</span><span style="color:#c0c5ce;">();
+        }
+    }
+}
+
+
+</span><span style="color:#65737e;">// src/nes/mod.rs
+    </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">casette_name</span><span style="color:#c0c5ce;">: &amp;</span><span style="color:#b48ead;">str</span><span style="color:#c0c5ce;">) -&gt; Nes {
+       </span><span style="color:#65737e;">// load iNES
+
+        </span><span style="color:#c0c5ce;">#[</span><span style="color:#bf616a;">cfg</span><span style="color:#c0c5ce;">(feature = &quot;</span><span style="color:#a3be8c;">dump</span><span style="color:#c0c5ce;">&quot;)] cpu.</span><span style="color:#96b5b4;">dump</span><span style="color:#c0c5ce;">();
+        ppu.</span><span style="color:#96b5b4;">dump</span><span style="color:#c0c5ce;">();
+
+        Nes { cpu, ppu }
+    }
+
+
+</span><span style="color:#65737e;">// src/main.rs
+</span><span style="color:#b48ead;">extern crate</span><span style="color:#c0c5ce;"> nes;
+
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">nes::nes::Nes;
+
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span style="color:#c0c5ce;">() {
+    </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> _nes = Nes::new(&quot;</span><span style="color:#a3be8c;">sample1.nes</span><span style="color:#c0c5ce;">&quot;);
+}
+
+
+</span><span style="color:#65737e;">// Cargo.toml
+</span><span style="color:#c0c5ce;">[features]
+dump = []
+</span></code></pre>
+<p>Sample iNES file is <a href="http://hp.vector.co.jp/authors/VA042397/nes/sample.html">here</a>(Download from a first link).</p>
+<p>Unzip the file and put <code>sample1.nes</code> at <code>cassette/</code>.</p>
+<p>After <code>cargo run --features dump</code>, you can check <code>prg_ram.dump</code> and <code>v_ram.dump</code> using hex editor such as <a href="http://www.suavetech.com/0xed/">0xED</a> and <a href="https://sourceforge.net/projects/hexedit/">hexedit</a>.</p>
+<p>Whole source code is available <a href="https://github.com/k-o-ta/nes/tree/load-iNES-file">here</a>.</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;implement-nes-in-rust-go-through-instructions-1&#x2F;">Implementation NES by Rust - Go Through Instructions 1</a>
+                </div>
+                <div class="c-pagination__older">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;high-performance-browser-networking-bookmemo&#x2F;">ハイパフォーマンス ブラウザネットワーキングを読んだ</a>
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/nes/">NES</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;css&#x2F;katex.min.css">
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;katex.min.js"></script>
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

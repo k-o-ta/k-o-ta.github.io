@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をrustで進める: 2章 | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をrustで進める: 2章 | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をrustで進める: 2章 | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;fontawesome.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;brands.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https:&#x2F;&#x2F;k-ota.dev&#x2F;favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をrustで進める: 2章</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2018-05-27">
+                    2018-05-27
+                </time>
+                
+                 - (1 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="chapter2">Chapter2<a class="zola-anchor" href="#chapter2" aria-label="Anchor link for: chapter2"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="2-3">2.3<a class="zola-anchor" href="#2-3" aria-label="Anchor link for: 2-3"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Emulator Structを作ってそこにメソッドを生やしていく。基本的にはサンプルコードをシンプルに真似るだけで良いが、<code>short_jump</code>命令は符号付きの即値をeip(命令ポインタ: 符号なし)に加算する箇所だけ、即値の正負を判定して、絶対値をとってから加算/減算を行う必要がある。</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Emulator {
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">short_jump</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> diff: </span><span style="color:#b48ead;">i8 </span><span style="color:#c0c5ce;">= </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#96b5b4;">get_sign_code8</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">) + </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">;
+        </span><span style="color:#b48ead;">match</span><span style="color:#c0c5ce;"> diff &gt; </span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">{
+            </span><span style="color:#d08770;">true </span><span style="color:#c0c5ce;">=&gt; {
+                </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.eip += diff as </span><span style="color:#b48ead;">u32</span><span style="color:#c0c5ce;">;
+            }
+            </span><span style="color:#d08770;">false </span><span style="color:#c0c5ce;">=&gt; {
+                </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.eip -= diff.</span><span style="color:#96b5b4;">abs</span><span style="color:#c0c5ce;">() as </span><span style="color:#b48ead;">u32</span><span style="color:#c0c5ce;">;
+            }
+        }
+    }
+}
+</span></code></pre>
+<p>i8型のdiffをそのままu32にキャストしても、diffが負数の場合はCのサンプルと同じ挙動にはならない</p>
+<p>コードは<a href="https://github.com/k-o-ta/rust_emu/tree/emu2.3">こちら</a></p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;java-performance-the-definitive-guide-bookmemo&#x2F;">Javaパフォーマンスを読んでsolrのパフォーマンス改善を行った</a>
+                </div>
+                <div class="c-pagination__older">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;x86-emulator-in-ubuntu-01&#x2F;">自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める</a>
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/x86-emulator/">x86-emulator</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;css&#x2F;katex.min.css">
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;katex.min.js"></script>
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

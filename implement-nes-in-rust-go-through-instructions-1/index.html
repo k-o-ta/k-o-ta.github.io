@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;fontawesome.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;brands.css" rel="stylesheet">
+        <link href="https:&#x2F;&#x2F;k-ota.dev&#x2F;fontawesome&#x2F;solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https:&#x2F;&#x2F;k-ota.dev&#x2F;favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Implementation NES by Rust - Go Through Instructions 1</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2018-03-01">
+                    2018-03-01
+                </time>
+                
+                 - (3 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h3 id="goal">Goal<a class="zola-anchor" href="#goal" aria-label="Anchor link for: goal"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Go through all instructions in <code>sample1.nes</code>.</p>
+<p>CPU instruction is</p>
+<ol>
+<li>fetch a instruction</li>
+<li>fetch a instruction</li>
+<li>increment PC</li>
+<li>parse the instruction into OperationCode, AddressingMode, IndexRegister(optional).</li>
+<li>execute operation</li>
+</ol>
+<h3 id="fetch-a-instruction">fetch a instruction<a class="zola-anchor" href="#fetch-a-instruction" aria-label="Anchor link for: fetch-a-instruction"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Fetching a instruction from <code>PrgRam</code> and address is indicated by ProgramCounter.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#b48ead;">pub struct </span><span style="color:#c0c5ce;">Cpu {
+    </span><span style="color:#65737e;">/// [Registers](http://wiki.nesdev.com/w/index.php/CPU_registers)
+    // Program Counter
+    </span><span style="color:#bf616a;">pc</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u16</span><span style="color:#c0c5ce;">,
+
+    </span><span style="color:#bf616a;">prg_ram</span><span style="color:#c0c5ce;">: PrgRam,
+}
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Cpu {
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_instruction</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) -&gt; </span><span style="color:#b48ead;">u8 </span><span style="color:#c0c5ce;">{
+        </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#96b5b4;">prg_ram_value</span><span style="color:#c0c5ce;">()
+    }
+
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">prg_ram_value</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) -&gt; </span><span style="color:#b48ead;">u8 </span><span style="color:#c0c5ce;">{
+        </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.prg_ram.memory[</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.pc as </span><span style="color:#b48ead;">usize</span><span style="color:#c0c5ce;">]
+    }
+}
+</span></code></pre>
+<p>Incrementing ProgramCounter is simple.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Cpu {
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">increment_pc</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+        </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.pc = </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.pc + </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+    }
+}
+</span></code></pre><h3 id="parse-the-instruction">parse the instruction<a class="zola-anchor" href="#parse-the-instruction" aria-label="Anchor link for: parse-the-instruction"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Parsing the instruction is bit more complex. We have to know <a href="http://wiki.nesdev.com/w/index.php/6502_instructions">OperationCode(OpCode)</a>, <a href="http://wiki.nesdev.com/w/index.php/CPU_addressing_modes">AddressingMode</a> and <a href="http://wiki.nesdev.com/w/index.php/CPU_registers">IndexRegister</a>.</p>
+<p>An instruction identify a set of OpCode, AddressingMode and IndexRegister.(<a href="http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes">ref</a>)</p>
+<p>These are list of OpCode, AddressingMode, and IndexRegister.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">#[</span><span style="color:#bf616a;">derive</span><span style="color:#c0c5ce;">(Debug)]
+</span><span style="color:#65737e;">/// [OperationCode](http://wiki.nesdev.com/w/index.php/6502_instructions)
+</span><span style="color:#b48ead;">enum </span><span style="color:#c0c5ce;">OpCode {
+    </span><span style="color:#d08770;">ADC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">SBC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">AND</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">ORA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">EOR</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">ASL</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">LSR</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">ROL</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">ROR</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BCC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BCS</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BEQ</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BNE</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BVC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BVS</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BPL</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BMI</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BIT</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">JMP</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">JSR</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">RTS</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">BRK</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">RTI</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CMP</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CPX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CPY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">INC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">DEC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">INX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">DEX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">INY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">DEY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CLC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">SEC</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CLI</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">SEI</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CLD</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">SED</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">CLV</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">LDA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">LDX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">LDY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">STA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">STX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">STY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TAX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TXA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TAY</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TYA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TSX</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">TXS</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">PHA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">PLA</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">PHP</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">PLP</span><span style="color:#c0c5ce;">,
+    </span><span style="color:#d08770;">NOP</span><span style="color:#c0c5ce;">,
+}
+
+#[</span><span style="color:#bf616a;">derive</span><span style="color:#c0c5ce;">(Debug)]
+</span><span style="color:#65737e;">/// [AddressingMode](http://wiki.nesdev.com/w/index.php/CPU_addressing_modes&lt;Paste&gt;)
+</span><span style="color:#b48ead;">enum </span><span style="color:#c0c5ce;">AddressingMode {
+    Accumulator,
+    Immediate,
+    Absolute,
+    ZeroPage,
+    IndexedZeroPage,
+    IndexedAbsolute,
+    Implied,
+    Relative,
+    IndexedIndirect,
+    IndirectIndexed,
+    AbsoluteIndirect,
+}
+
+#[</span><span style="color:#bf616a;">derive</span><span style="color:#c0c5ce;">(Debug)]
+</span><span style="color:#b48ead;">enum </span><span style="color:#c0c5ce;">IndexRegister {
+    X,
+    Y,
+}
+
+</span></code></pre>
+<p>Let's start below.</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#65737e;">// Cargo.toml
+</span><span style="color:#c0c5ce;">[dependencies]
+error-chain = &quot;</span><span style="color:#a3be8c;">0.11.0</span><span style="color:#c0c5ce;">&quot;
+
+</span><span style="color:#65737e;">// src/nes/mod.rs
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Nes {
+  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">run</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+    </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.cpu.</span><span style="color:#96b5b4;">run</span><span style="color:#c0c5ce;">();
+  }
+}
+
+</span><span style="color:#65737e;">// src/nes/cpu/mod.rs
+</span><span style="color:#b48ead;">use </span><span style="color:#c0c5ce;">errors::*;
+
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">Cpu {
+  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">prg_ram</span><span style="color:#c0c5ce;">: PrgRam) -&gt; Cpu {
+    Cpu {
+      pc: </span><span style="color:#d08770;">0x8000</span><span style="color:#c0c5ce;">,
+      prg_ram,
+    }
+  }
+
+  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">run</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) {
+    </span><span style="color:#b48ead;">loop </span><span style="color:#c0c5ce;">{
+      </span><span style="color:#b48ead;">let</span><span style="color:#c0c5ce;"> instruction = </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#96b5b4;">fetch_instruction</span><span style="color:#c0c5ce;">();
+      </span><span style="color:#b48ead;">match Self</span><span style="color:#c0c5ce;">::parse_instruction(instruction) {
+        Ok((op_code, addressing_mode, register)) =&gt; {
+          </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#96b5b4;">increment_pc</span><span style="color:#c0c5ce;">();
+        }
+        Err(error_message) =&gt; {
+          panic!(&quot;</span><span style="color:#a3be8c;">{}, at: {:0x}, cpu_dump: {:?}</span><span style="color:#c0c5ce;">&quot;, error_message, </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.pc, </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">);
+        }
+      }
+    }
+  }
+
+  </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_instruction</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) -&gt; </span><span style="color:#b48ead;">u8 </span><span style="color:#c0c5ce;">{
+    </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.</span><span style="color:#96b5b4;">prg_ram_value</span><span style="color:#c0c5ce;">()
+  }
+
+  </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">parse_instruction</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">instruction</span><span style="color:#c0c5ce;">: </span><span style="color:#b48ead;">u8</span><span style="color:#c0c5ce;">,) -&gt; Result&lt;(OpCode, AddressingMode, Option&lt;IndexRegister&gt;)&gt; {
+      </span><span style="color:#b48ead;">let </span><span style="color:#c0c5ce;">(op_code, addressing_mode, register): (OpCode,
+						 AddressingMode,
+						 Option&lt;IndexRegister&gt;) = </span><span style="color:#b48ead;">match</span><span style="color:#c0c5ce;"> instruction {
+	  _ =&gt; Err(format!(&quot;</span><span style="color:#a3be8c;">unknown instruction: </span><span style="color:#d08770;">{:0x}</span><span style="color:#c0c5ce;">&quot;, instruction,))?,
+      };
+      Ok((op_code, addressing_mode, register))
+  }
+
+  </span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">fmt::Debug </span><span style="color:#b48ead;">for </span><span style="color:#c0c5ce;">Cpu {
+      </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fmt</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">, </span><span style="color:#bf616a;">f</span><span style="color:#c0c5ce;">: &amp;</span><span style="color:#b48ead;">mut </span><span style="color:#c0c5ce;">fmt::Formatter) -&gt; fmt::Result {
+          write!(f, &quot;</span><span style="color:#a3be8c;">A:</span><span style="color:#d08770;">{:0x}</span><span style="color:#a3be8c;">, PC:</span><span style="color:#d08770;">{:0x}</span><span style="color:#c0c5ce;">&quot;, </span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">.pc)
+      }
+  }
+}
+
+</span></code></pre>
+<p>If you run <code>cargo run</code>, you get <code>panicked at 'unknown instruction: 78, at: 8000, cpu_dump: A:0, X:0, Y:0, PC:8000'</code>.
+It means instruction is 78, but you have not implemented yet. So, you have to implement all instructions.</p>
+<p>I suggest using <a href="https://github.com/passcod/cargo-watch">cargo watch</a>, to implemnt instructions.</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#65737e;">// src/nes/mod.rs
+</span><span style="color:#c0c5ce;">#[</span><span style="color:#bf616a;">cfg</span><span style="color:#c0c5ce;">(test)]
+</span><span style="color:#b48ead;">mod </span><span style="color:#c0c5ce;">tests {
+    </span><span style="color:#b48ead;">use super</span><span style="color:#c0c5ce;">::*;
+    #[</span><span style="color:#bf616a;">test</span><span style="color:#c0c5ce;">]
+    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">run_test</span><span style="color:#c0c5ce;">() {
+        </span><span style="color:#b48ead;">let mut</span><span style="color:#c0c5ce;"> nes = Nes::new(&quot;</span><span style="color:#a3be8c;">sample1.nes</span><span style="color:#c0c5ce;">&quot;);
+        nes.</span><span style="color:#96b5b4;">run</span><span style="color:#c0c5ce;">();
+    }
+}
+</span></code></pre>
+<p><code>cargo watch -x test</code> watch source code change and run compile and test automatically. If you implement instruction 78, test run and you get <code>unknown instruction: a2, at: 8001, cpu_dump: PC:8001'</code> because next instruction is <code>a2</code>.</p>
+<p>Whole source code is available <a href="https://github.com/k-o-ta/nes/tree/go-through-instructions-1">here</a>.</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;x86-emulator-in-ubuntu-01&#x2F;">自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める</a>
+                </div>
+                <div class="c-pagination__older">
+                    <a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;implement-nes-in-rust-load-ines&#x2F;">Implementation NES by Rust - load iNES</a>
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/nes/">NES</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https:&#x2F;&#x2F;k-ota.dev&#x2F;css&#x2F;katex.min.css">
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;katex.min.js"></script>
+      <script defer src="https:&#x2F;&#x2F;k-ota.dev&#x2F;js&#x2F;mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

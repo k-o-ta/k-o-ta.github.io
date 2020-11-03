@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://k-ota.dev/sitemap.xml

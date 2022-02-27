@@ -1,6 +1,6 @@
 +++
 title = "zeitwerkとProtocol Buffersの共存"
-date = 2022-02-24
+date = 2022-02-05
 [taxonomies]
 tags = ["Ruby on Rails", "Protocol Buffers"]
 [extra]

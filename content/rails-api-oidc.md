@@ -1,6 +1,6 @@
 +++
 title = "railsをAPIサーバーとして使うときのOIDC認証"
-date = 2022-02-23
+date = 2022-01-08
 [taxonomies]
 tags = ["Ruby on Rails"]
 [extra]
@@ -71,6 +71,23 @@ class SessionsController < ApplicationController
   end
 end
 ```
+
+###  CSRF対策
+APIのレスポンスを生成する過程で
+```ruby
+response.set_header('my_application_csrf_token', form_authenticity_token)
+```
+を設定してあげる。もしCORS環境の場合はjsのfetch apiから取得できるheader情報に制限があるので
+```ruby
+response.set_header('Access-Control-Expose-Headers', 'my_application_csrf_token')
+```
+も追加で必要。jsは
+```javascript
+fetch(url, {credentials: 'include'}).then(
+  response => { return { response: response.json(), csrf_token: res.headers.get("my_application_csrf_token") } }
+)
+```
+のようにしてcallする
 
 
 ## おまけ: SPAとAPIサーバーが別ドメインの場合

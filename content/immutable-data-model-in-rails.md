@@ -1,6 +1,6 @@
 +++
 title = "railsでイミュータブルデータモデルを試してみる"
-date = 2022-02-22
+date = 2021-12-25
 [taxonomies]
 tags = ["Ruby on Rails"]
 [extra]

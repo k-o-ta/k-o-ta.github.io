@@ -1,0 +1,12 @@
++++
+title = "AWS lambdaでのspring cloud functionの実行"
+date = 2022-02-25
+[taxonomies]
+tags = ["java", "spring", "lambda"]
+[extra]
+toc = true
++++
+
+spring cloud functionとAWS向けの設定はそれぞれドキュメントを見る
+* [spring cloud function](https://cloud.spring.io/spring-cloud-function/reference/html/spring-cloud-function.html)
+* [AWS向けの設定]()

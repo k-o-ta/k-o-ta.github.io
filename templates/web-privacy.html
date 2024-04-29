@@ -1,0 +1,55 @@
+{% import "my_post_macros.html" as my_post_macros %}
+{% extends "zola-pickles/templates/index.html" %}
+{% block title -%}
+  <title>WebPrivacy周りのcommit logを眺める</title>
+  <meta property="og:title" content="WebPrivacy周りのcommit logを眺める" />
+  <meta name="twitter:title" content="WebPrivacy周りのcommit logを眺める" />
+{%- endblock title %}
+
+{% block header -%}
+<header class="l-header">
+    <h1 class="c-title p-title"><a href="{{ config.base_url }}web-privacy" class="p-title__link">WebPrivacy周りのcommit logを眺める</a></h1>
+</header>
+{%- endblock header %}
+
+{% block content %}
+  <ul>
+    {% for page in paginator.pages %}
+    <li class="c-article p-my-list-article">
+        {{ my_post_macros::title(page=page) }}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <nav class="c-pagination p-pagination">
+      <div class="c-pagination__ctrl">
+          <div class="c-pagination__newer">
+              {% if paginator.previous -%}
+              <a href="{{ paginator.previous }}">Newer</a>
+              {%- endif %}
+          </div>
+          <div class="c-pagination__older">
+              {% if paginator.next -%}
+              <a href="{{ paginator.next }}">Older</a>
+              {%- endif %}
+          </div>
+      </div>
+      <span class="c-pagination__count p-pagination__count">Page {{ paginator.current_index }} of {{ paginator.number_pagers }}</span>
+  </nav>
+{% endblock %}
+
+{% block footer -%}
+    <p class="tags">
+        <span><a href=/tags>tags</a></span>
+    </p>
+<p class="p-copyright">
+    {% if config.extra.copyright -%}
+    {% set content = config.extra.copyright | markdown(inline=true) %}
+    {{ post_macros::polish(content=content) }}
+    {%- endif %}
+</p>
+{%- endblock footer %}
+
+{% block extra_head -%}
+    <link rel="stylesheet" href="{{ get_url(path="index.css") }}" />
+{%- endblock extra_head %}

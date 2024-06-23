@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Railsでresolvを使うときにrequireするか | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Railsでresolvを使うときにrequireするか | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Railsでresolvを使うときにrequireするか | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Railsでresolvを使うときにrequireするか</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-08-24">
+                    2020-08-24
+                </time>
+                
+                 - (2 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="結論">結論<a class="zola-anchor" href="#結論" aria-label="Anchor link for: 結論"><i class="fas fa-link"></i></a> 
+</h2>
+<p><code>require 'resolv'</code>する</p>
+<h2 id="背景">背景<a class="zola-anchor" href="#背景" aria-label="Anchor link for: 背景"><i class="fas fa-link"></i></a> 
+</h2>
+<p>Railsを書いていて、<a href="https://docs.ruby-lang.org/ja/latest/library/resolv.html">resolv</a>を使う場面があった。開発環境では<code>require 'resolv'</code>なしでも動いていたが、ステージング環境で試したところ<code>uninitialized constant Resolv</code>が出た。確認したところ開発環境では<a href="https://github.com/eventmachine/eventmachine/blob/v1.2.7/lib/eventmachine.rb#L39">eventmachine</a>で<code>require</code>され、<code>eventmachine</code>は<a href="https://github.com/macournoyer/thin/blob/v1.7.2/lib/thin.rb#L7">thin</a>で<code>require</code>されていた。thinは開発環境だけで利用していたため開発環境とステージング環境で挙動が変わった。</p>
+<p>ところで、すべての環境でthinを使っていても<code>require 'resolv'</code>は入れておいたほうがよい。アプリケーションサーバーの内部で何をrequireしているかはアプリケーションコード側からは気にするべきではないので。</p>
+<p>調査したときはresolvに適当に例外になるコードを入れて<code>require 'resolv'</code>を失敗させてrequireしている箇所を確認したが、もう少し楽な方法はあるだろうか。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/ruby/">Ruby</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/ruby-on-rails/">Ruby on Rails</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>ハイパフォーマンス ブラウザネットワーキングを読んだ | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="ハイパフォーマンス ブラウザネットワーキングを読んだ | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="ハイパフォーマンス ブラウザネットワーキングを読んだ | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>ハイパフォーマンス ブラウザネットワーキングを読んだ</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2017-02-01">
+                    2017-02-01
+                </time>
+                
+                 - (5 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p><a href="https://www.oreilly.co.jp/books/9784873116761/">ハイパフォーマンス ブラウザネットワーキング</a>を読んだ。ブラウザにまつわるネットワーク技術について、そもそもレイテンシや帯域とはなにかというところから、TCP/UDPやTLSというWebを支えるプロトコル、果てはHTTP2.0やWebRTCという新しいプロトコルまで広く深く学ぶことができる。</p>
+<h2 id="1章から4章まで">1章から4章まで<a class="zola-anchor" href="#1章から4章まで" aria-label="Anchor link for: 1章から4章まで"><i class="fas fa-link"></i></a> 
+</h2>
+<p>レイテンシ、帯域、TCP、UDP、TLSについて学ぶ。技術革新によってEndtoEndのレイテンシーは改善が見込まれるが、光の速さを追い抜くことはできないため、パフォーマンス向上に寄与する度合いは限定的である。アプリケーションのパフォーマンスを向上させるにはそれを認識した上でパケットの無駄な往復を減らすような、レイテンシを隠蔽できるアプリケーションを構築する必要があると思った。</p>
+<h2 id="5章から8章まで">5章から8章まで<a class="zola-anchor" href="#5章から8章まで" aria-label="Anchor link for: 5章から8章まで"><i class="fas fa-link"></i></a> 
+</h2>
+<p>ワイヤレスネットワークについて学ぶ。私は以前通信業界のシステム開発をしていたが、専ら有線接続を前提とした世界だったのでこのあたりは新鮮に感じた。特にモバイルユーザーにとってはネットワークの利用方法がバッテリーに大きく影響するのでアプリケーション開発においても気をつけたい。日本国内の特に都市部のユーザーのモバイルネットワーク環境は基本的に良好なので開発するときも有線接続の設定にしてしまうが、ネットワーク環境が悪いときにどういう体験になるかは気にしておきたい(特に月末になるとギガが足りない状態になるので)<br />
+その他モバイルネットワークの特性との相性を気にするべき要素(ビーコンとかリアルタイム解析とかキープアライブとか)や断続的なデータの送受信よりはまとめてデータを送受信する、といったことが書かれている</p>
+<h2 id="9章から13章まで">9章から13章まで<a class="zola-anchor" href="#9章から13章まで" aria-label="Anchor link for: 9章から13章まで"><i class="fas fa-link"></i></a> 
+</h2>
+<p>HTTPについてまとめられている。実務的にはHTTP1.1までの歴史や最適化についてがとても役立つのだが、個人的にはHTTP2についての出自や目指すところが大変面白かった。光速という物理的制約がある中でプロトコル自体を改善することでより良いパフォーマンスを得る取り組みには本当に頭が下がる。実際にGoogleなどのサービスで運用されているということも実運用に耐えうることを示している。自分もこういうWebに貢献できる仕事をしたいものだ。</p>
+<h2 id="14章から18章まで">14章から18章まで<a class="zola-anchor" href="#14章から18章まで" aria-label="Anchor link for: 14章から18章まで"><i class="fas fa-link"></i></a> 
+</h2>
+<p>ブラウザのネットワークAPI周りについて書かれている。現職の仕事ではXMLHttpRequest以外はあまり使うことはないのだが、Server-Sent Eventsなんかは社内管理画面でも結構使えそう。現状イベントをメールで送信するフローがよくあるので。WebRTCは良くビデオ通話の文脈で目にするが、もっと汎用的に使えるものだとわかった。ブラウザの中にこんな複雑なものが入っており、それが現実的な速度で動くようになっているの凄すぎないか?</p>
+<h2 id="総じて">総じて<a class="zola-anchor" href="#総じて" aria-label="Anchor link for: 総じて"><i class="fas fa-link"></i></a> 
+</h2>
+<p>一度ですべてを理解する必要はなく(というか無理)、何度も後で読み返す価値のある本だった</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/books/">books</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/browser/">browser</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

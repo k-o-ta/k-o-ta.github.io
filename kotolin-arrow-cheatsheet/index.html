@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>kotlin arrow option相互変換チートシート | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="kotlin arrow option相互変換チートシート | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="kotlin arrow option相互変換チートシート | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>kotlin arrow option相互変換チートシート</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-09-19">
+                    2020-09-19
+                </time>
+                
+                 - (2 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>kotlinで<a href="https://arrow-kt.io/">arrow</a>を使ったときにarrowのoptionとkotlinのnullableとjavaのoptionalを相互にどうやって変換すればよいかをまとめた</p>
+<span id="continue-reading"></span><h2 id="arrowとは">arrowとは<a class="zola-anchor" href="#arrowとは" aria-label="Anchor link for: arrowとは"><i class="fas fa-link"></i></a> 
+</h2>
+<p><a href="https://arrow-kt.io/">arrow</a>とはkotlinに関数型プログラミングの機能を追加するライブラリ。</p>
+<h2 id="コード">コード<a class="zola-anchor" href="#コード" aria-label="Anchor link for: コード"><i class="fas fa-link"></i></a> 
+</h2>
+<p><code>ディレクトリ構成</code></p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>.
+</span><span>├── build.gradle
+</span><span>└── src
+</span><span>    └── main
+</span><span>        ├── java
+</span><span>        │   └── kotlinsandbox
+</span><span>        │       └── MyJavaClass.java
+</span><span>        └── kotlin
+</span><span>            └── kotlinsandbox
+</span><span>                ├── App.kt
+</span><span>                └── MyKotlinClass.kt
+</span><span>
+</span></code></pre>
+<p><code>build.gradle</code></p>
+<pre data-lang="gradle" style="background-color:#2b303b;color:#c0c5ce;" class="language-gradle "><code class="language-gradle" data-lang="gradle"><span>plugins {
+</span><span>    id &#39;</span><span style="color:#a3be8c;">org.jetbrains.kotlin.jvm</span><span>&#39; version &#39;</span><span style="color:#a3be8c;">1.4.0</span><span>&#39;
+</span><span>    id &#39;</span><span style="color:#a3be8c;">application</span><span>&#39;
+</span><span>}
+</span><span>apply </span><span style="color:#d08770;">plugin</span><span>: &#39;</span><span style="color:#a3be8c;">kotlin-kapt</span><span>&#39;
+</span><span>
+</span><span>repositories {
+</span><span>    mavenCentral()
+</span><span>    maven { url &quot;</span><span style="color:#a3be8c;">https://dl.bintray.com/arrow-kt/arrow-kt/</span><span>&quot; }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">def</span><span> arrow_version = &quot;</span><span style="color:#a3be8c;">0.10.5</span><span>&quot;
+</span><span>dependencies {
+</span><span>    implementation platform(&#39;</span><span style="color:#a3be8c;">org.jetbrains.kotlin:kotlin-bom</span><span>&#39;)
+</span><span>    implementation &#39;</span><span style="color:#a3be8c;">org.jetbrains.kotlin:kotlin-stdlib-jdk8</span><span>&#39;
+</span><span>
+</span><span>    implementation &quot;</span><span style="color:#a3be8c;">io.arrow-kt:arrow-core:</span><span style="color:#bf616a;">$arrow_version</span><span>&quot;
+</span><span>    implementation &quot;</span><span style="color:#a3be8c;">io.arrow-kt:arrow-syntax:</span><span style="color:#bf616a;">$arrow_version</span><span>&quot;
+</span><span>    kapt    &quot;</span><span style="color:#a3be8c;">io.arrow-kt:arrow-meta:</span><span style="color:#bf616a;">$arrow_version</span><span>&quot;
+</span><span>}
+</span><span>
+</span><span>application {
+</span><span>    mainClassName = &#39;</span><span style="color:#a3be8c;">kotlinsandbox.AppKt</span><span>&#39;
+</span><span>}
+</span></code></pre>
+<p><code>App.kt</code></p>
+<pre data-lang="kotlin" style="background-color:#2b303b;color:#c0c5ce;" class="language-kotlin "><code class="language-kotlin" data-lang="kotlin"><span style="color:#b48ead;">package </span><span>kotlinsandbox
+</span><span>
+</span><span style="color:#b48ead;">import</span><span> arrow.core.Option
+</span><span style="color:#b48ead;">import</span><span> arrow.core.none
+</span><span style="color:#b48ead;">import</span><span> arrow.core.toOption
+</span><span style="color:#b48ead;">import</span><span> java.util.*
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">fun </span><span style="color:#8fa1b3;">main</span><span>(args: </span><span style="color:#b48ead;">Array</span><span>&lt;</span><span style="color:#b48ead;">String</span><span>&gt;) {
+</span><span>    </span><span style="color:#65737e;">// java(platform type) -&gt; kotlin nullable
+</span><span>    </span><span style="color:#b48ead;">var </span><span>nullable: </span><span style="color:#b48ead;">String</span><span>? = MyJavaClass.platformString()
+</span><span>    </span><span style="color:#65737e;">// java(platform type) -&gt; kotlin arrow option
+</span><span>    </span><span style="color:#b48ead;">var </span><span>option1: Option&lt;</span><span style="color:#b48ead;">String</span><span>&gt; = Option.fromNullable(MyJavaClass.platformString())
+</span><span>    </span><span style="color:#b48ead;">var </span><span>option2: Option&lt;</span><span style="color:#b48ead;">String</span><span>&gt; = MyJavaClass.platformString().toOption()
+</span><span>    </span><span style="color:#65737e;">// java(platform type) -&gt; java optional
+</span><span>    </span><span style="color:#b48ead;">var </span><span>optional: Optional&lt;</span><span style="color:#b48ead;">String</span><span>&gt; = Optional.ofNullable(MyJavaClass.platformString())
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// java optional -&gt; kotlin nullable
+</span><span>    nullable = MyJavaClass.optionalString().orElse(</span><span style="color:#d08770;">null</span><span>)
+</span><span>    </span><span style="color:#65737e;">// java optional -&gt; kotlin arrow option
+</span><span>    option1 = Option.fromNullable(MyJavaClass.optionalString().orElse(</span><span style="color:#d08770;">null</span><span>))
+</span><span>    option2 = MyJavaClass.optionalString().orElse(</span><span style="color:#d08770;">null</span><span>).toOption()
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">val </span><span>nullString: </span><span style="color:#b48ead;">String</span><span>? = </span><span style="color:#d08770;">null
+</span><span>    </span><span style="color:#65737e;">// kotlin nullable -&gt; kotlin arrow option
+</span><span>    option1 = Option.fromNullable(nullString)
+</span><span>    option2 = nullString.toOption()
+</span><span>    </span><span style="color:#65737e;">// kotlin nullable -&gt; java optional
+</span><span>    optional = Optional.ofNullable(nullString)
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">val </span><span>optionString: Option&lt;</span><span style="color:#b48ead;">String</span><span>&gt; = none()
+</span><span>    </span><span style="color:#65737e;">// kotlin arrow option -&gt; kotlin nullable
+</span><span>    nullable = optionString.orNull()
+</span><span>    </span><span style="color:#65737e;">// kotlin arrow option -&gt; java optional
+</span><span>    optional = Optional.ofNullable(optionString.orNull())
+</span><span>}
+</span></code></pre>
+<p><code>MyJavaClass.java</code></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">package </span><span>kotlinsandbox;
+</span><span>
+</span><span style="color:#b48ead;">import </span><span>java.util.</span><span style="color:#ebcb8b;">Optional</span><span>;
+</span><span>
+</span><span style="color:#b48ead;">public class </span><span style="color:#ebcb8b;">MyJavaClass </span><span style="color:#eff1f5;">{
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">public static </span><span style="color:#ebcb8b;">String </span><span style="color:#8fa1b3;">platformString</span><span style="color:#eff1f5;">() {
+</span><span style="color:#eff1f5;">        </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">null</span><span style="color:#eff1f5;">;
+</span><span style="color:#eff1f5;">    }
+</span><span style="color:#eff1f5;">
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">public static </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">&lt;</span><span style="color:#ebcb8b;">String</span><span style="color:#eff1f5;">&gt; </span><span style="color:#8fa1b3;">optionalString</span><span style="color:#eff1f5;">() {
+</span><span style="color:#eff1f5;">        </span><span style="color:#b48ead;">return </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">empty</span><span style="color:#eff1f5;">();
+</span><span style="color:#eff1f5;">    }
+</span><span style="color:#eff1f5;">
+</span><span style="color:#eff1f5;">    </span><span style="color:#65737e;">// javaでの変換の方法も書いておく
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">public static void </span><span style="color:#8fa1b3;">convert</span><span style="color:#eff1f5;">() {
+</span><span style="color:#eff1f5;">        </span><span style="color:#65737e;">// java(platform type) -&gt; java optional
+</span><span style="color:#eff1f5;">        </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">&lt;</span><span style="color:#ebcb8b;">String</span><span style="color:#eff1f5;">&gt; optional </span><span>= </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">ofNullable</span><span style="color:#eff1f5;">(</span><span style="color:#bf616a;">platformString</span><span style="color:#eff1f5;">());
+</span><span style="color:#eff1f5;">        </span><span style="color:#65737e;">// kotlin nullable -&gt; java optional
+</span><span style="color:#eff1f5;">        optional </span><span>= </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">ofNullable</span><span style="color:#eff1f5;">(</span><span style="color:#ebcb8b;">MyKotlinClass</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">nullableString</span><span style="color:#eff1f5;">());
+</span><span style="color:#eff1f5;">        </span><span style="color:#65737e;">// kotlin arrow option -&gt; java optional
+</span><span style="color:#eff1f5;">        optional </span><span>= </span><span style="color:#ebcb8b;">Optional</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">ofNullable</span><span style="color:#eff1f5;">(</span><span style="color:#ebcb8b;">MyKotlinClass</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">optionString</span><span style="color:#eff1f5;">().</span><span style="color:#bf616a;">orNull</span><span style="color:#eff1f5;">());
+</span><span style="color:#eff1f5;">    }
+</span><span style="color:#eff1f5;">}
+</span></code></pre>
+<p><code>MyKotlinClass.kt</code></p>
+<pre data-lang="kotlin" style="background-color:#2b303b;color:#c0c5ce;" class="language-kotlin "><code class="language-kotlin" data-lang="kotlin"><span style="color:#b48ead;">package </span><span>kotlinsandbox
+</span><span>
+</span><span style="color:#b48ead;">import</span><span> arrow.core.Option
+</span><span style="color:#b48ead;">import</span><span> arrow.core.none
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">MyKotlinClass</span><span> {
+</span><span>    </span><span style="color:#b48ead;">companion object</span><span> {
+</span><span>        @JvmStatic
+</span><span>        </span><span style="color:#b48ead;">fun </span><span style="color:#8fa1b3;">nullableString</span><span>(): </span><span style="color:#b48ead;">String</span><span>? {
+</span><span>            </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">null
+</span><span>        }
+</span><span>
+</span><span>        @JvmStatic
+</span><span>        </span><span style="color:#b48ead;">fun </span><span style="color:#8fa1b3;">optionString</span><span>(): Option&lt;</span><span style="color:#b48ead;">String</span><span>&gt; {
+</span><span>           </span><span style="color:#b48ead;">return</span><span> none()
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/kotlin/">kotlin</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/arrow/">arrow</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

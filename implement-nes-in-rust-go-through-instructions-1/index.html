@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Implementation NES by Rust - Go Through Instructions 1 | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Implementation NES by Rust - Go Through Instructions 1</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2018-03-01">
+                    2018-03-01
+                </time>
+                
+                 - (3 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h3 id="Goal">Goal<a class="zola-anchor" href="#Goal" aria-label="Anchor link for: Goal"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Go through all instructions in <code>sample1.nes</code>.</p>
+<p>CPU instruction is</p>
+<ol>
+<li>fetch a instruction</li>
+<li>fetch a instruction</li>
+<li>increment PC</li>
+<li>parse the instruction into OperationCode, AddressingMode, IndexRegister(optional).</li>
+<li>execute operation</li>
+</ol>
+<h3 id="fetch_a_instruction">fetch a instruction<a class="zola-anchor" href="#fetch_a_instruction" aria-label="Anchor link for: fetch_a_instruction"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Fetching a instruction from <code>PrgRam</code> and address is indicated by ProgramCounter.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub struct </span><span>Cpu {
+</span><span>    </span><span style="color:#65737e;">/// [Registers](http://wiki.nesdev.com/w/index.php/CPU_registers)
+</span><span>    </span><span style="color:#65737e;">// Program Counter
+</span><span>    </span><span style="color:#bf616a;">pc</span><span>: </span><span style="color:#b48ead;">u16</span><span>,
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">prg_ram</span><span>: PrgRam,
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Cpu {
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_instruction</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; </span><span style="color:#b48ead;">u8 </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">prg_ram_value</span><span>()
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">prg_ram_value</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; </span><span style="color:#b48ead;">u8 </span><span>{
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.prg_ram.memory[</span><span style="color:#bf616a;">self</span><span>.pc as </span><span style="color:#b48ead;">usize</span><span>]
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Incrementing ProgramCounter is simple.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">impl </span><span>Cpu {
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">increment_pc</span><span>(&amp;</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) {
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.pc = </span><span style="color:#bf616a;">self</span><span>.pc + </span><span style="color:#d08770;">1</span><span>;
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h3 id="parse_the_instruction">parse the instruction<a class="zola-anchor" href="#parse_the_instruction" aria-label="Anchor link for: parse_the_instruction"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Parsing the instruction is bit more complex. We have to know <a href="http://wiki.nesdev.com/w/index.php/6502_instructions">OperationCode(OpCode)</a>, <a href="http://wiki.nesdev.com/w/index.php/CPU_addressing_modes">AddressingMode</a> and <a href="http://wiki.nesdev.com/w/index.php/CPU_registers">IndexRegister</a>.</p>
+<p>An instruction identify a set of OpCode, AddressingMode and IndexRegister.(<a href="http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes">ref</a>)</p>
+<p>These are list of OpCode, AddressingMode, and IndexRegister.</p>
+<p><code>src/nes/cpu/mod.rs</code></p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Debug)]
+</span><span style="color:#65737e;">/// [OperationCode](http://wiki.nesdev.com/w/index.php/6502_instructions)
+</span><span style="color:#b48ead;">enum </span><span>OpCode {
+</span><span>    </span><span style="color:#d08770;">ADC</span><span>,
+</span><span>    </span><span style="color:#d08770;">SBC</span><span>,
+</span><span>    </span><span style="color:#d08770;">AND</span><span>,
+</span><span>    </span><span style="color:#d08770;">ORA</span><span>,
+</span><span>    </span><span style="color:#d08770;">EOR</span><span>,
+</span><span>    </span><span style="color:#d08770;">ASL</span><span>,
+</span><span>    </span><span style="color:#d08770;">LSR</span><span>,
+</span><span>    </span><span style="color:#d08770;">ROL</span><span>,
+</span><span>    </span><span style="color:#d08770;">ROR</span><span>,
+</span><span>    </span><span style="color:#d08770;">BCC</span><span>,
+</span><span>    </span><span style="color:#d08770;">BCS</span><span>,
+</span><span>    </span><span style="color:#d08770;">BEQ</span><span>,
+</span><span>    </span><span style="color:#d08770;">BNE</span><span>,
+</span><span>    </span><span style="color:#d08770;">BVC</span><span>,
+</span><span>    </span><span style="color:#d08770;">BVS</span><span>,
+</span><span>    </span><span style="color:#d08770;">BPL</span><span>,
+</span><span>    </span><span style="color:#d08770;">BMI</span><span>,
+</span><span>    </span><span style="color:#d08770;">BIT</span><span>,
+</span><span>    </span><span style="color:#d08770;">JMP</span><span>,
+</span><span>    </span><span style="color:#d08770;">JSR</span><span>,
+</span><span>    </span><span style="color:#d08770;">RTS</span><span>,
+</span><span>    </span><span style="color:#d08770;">BRK</span><span>,
+</span><span>    </span><span style="color:#d08770;">RTI</span><span>,
+</span><span>    </span><span style="color:#d08770;">CMP</span><span>,
+</span><span>    </span><span style="color:#d08770;">CPX</span><span>,
+</span><span>    </span><span style="color:#d08770;">CPY</span><span>,
+</span><span>    </span><span style="color:#d08770;">INC</span><span>,
+</span><span>    </span><span style="color:#d08770;">DEC</span><span>,
+</span><span>    </span><span style="color:#d08770;">INX</span><span>,
+</span><span>    </span><span style="color:#d08770;">DEX</span><span>,
+</span><span>    </span><span style="color:#d08770;">INY</span><span>,
+</span><span>    </span><span style="color:#d08770;">DEY</span><span>,
+</span><span>    </span><span style="color:#d08770;">CLC</span><span>,
+</span><span>    </span><span style="color:#d08770;">SEC</span><span>,
+</span><span>    </span><span style="color:#d08770;">CLI</span><span>,
+</span><span>    </span><span style="color:#d08770;">SEI</span><span>,
+</span><span>    </span><span style="color:#d08770;">CLD</span><span>,
+</span><span>    </span><span style="color:#d08770;">SED</span><span>,
+</span><span>    </span><span style="color:#d08770;">CLV</span><span>,
+</span><span>    </span><span style="color:#d08770;">LDA</span><span>,
+</span><span>    </span><span style="color:#d08770;">LDX</span><span>,
+</span><span>    </span><span style="color:#d08770;">LDY</span><span>,
+</span><span>    </span><span style="color:#d08770;">STA</span><span>,
+</span><span>    </span><span style="color:#d08770;">STX</span><span>,
+</span><span>    </span><span style="color:#d08770;">STY</span><span>,
+</span><span>    </span><span style="color:#d08770;">TAX</span><span>,
+</span><span>    </span><span style="color:#d08770;">TXA</span><span>,
+</span><span>    </span><span style="color:#d08770;">TAY</span><span>,
+</span><span>    </span><span style="color:#d08770;">TYA</span><span>,
+</span><span>    </span><span style="color:#d08770;">TSX</span><span>,
+</span><span>    </span><span style="color:#d08770;">TXS</span><span>,
+</span><span>    </span><span style="color:#d08770;">PHA</span><span>,
+</span><span>    </span><span style="color:#d08770;">PLA</span><span>,
+</span><span>    </span><span style="color:#d08770;">PHP</span><span>,
+</span><span>    </span><span style="color:#d08770;">PLP</span><span>,
+</span><span>    </span><span style="color:#d08770;">NOP</span><span>,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Debug)]
+</span><span style="color:#65737e;">/// [AddressingMode](http://wiki.nesdev.com/w/index.php/CPU_addressing_modes&lt;Paste&gt;)
+</span><span style="color:#b48ead;">enum </span><span>AddressingMode {
+</span><span>    Accumulator,
+</span><span>    Immediate,
+</span><span>    Absolute,
+</span><span>    ZeroPage,
+</span><span>    IndexedZeroPage,
+</span><span>    IndexedAbsolute,
+</span><span>    Implied,
+</span><span>    Relative,
+</span><span>    IndexedIndirect,
+</span><span>    IndirectIndexed,
+</span><span>    AbsoluteIndirect,
+</span><span>}
+</span><span>
+</span><span>#[</span><span style="color:#bf616a;">derive</span><span>(Debug)]
+</span><span style="color:#b48ead;">enum </span><span>IndexRegister {
+</span><span>    X,
+</span><span>    Y,
+</span><span>}
+</span><span>
+</span></code></pre>
+<p>Let's start below.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// Cargo.toml
+</span><span>[dependencies]
+</span><span>error-chain = &quot;</span><span style="color:#a3be8c;">0.11.0</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;">// src/nes/mod.rs
+</span><span style="color:#b48ead;">impl </span><span>Nes {
+</span><span>  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">run</span><span>(</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) {
+</span><span>    </span><span style="color:#bf616a;">self</span><span>.cpu.</span><span style="color:#96b5b4;">run</span><span>();
+</span><span>  }
+</span><span>}
+</span><span>
+</span><span style="color:#65737e;">// src/nes/cpu/mod.rs
+</span><span style="color:#b48ead;">use </span><span>errors::*;
+</span><span>
+</span><span style="color:#b48ead;">impl </span><span>Cpu {
+</span><span>  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">new</span><span>(</span><span style="color:#bf616a;">prg_ram</span><span>: PrgRam) -&gt; Cpu {
+</span><span>    Cpu {
+</span><span>      pc: </span><span style="color:#d08770;">0x8000</span><span>,
+</span><span>      prg_ram,
+</span><span>    }
+</span><span>  }
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">run</span><span>(</span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">self</span><span>) {
+</span><span>    </span><span style="color:#b48ead;">loop </span><span>{
+</span><span>      </span><span style="color:#b48ead;">let</span><span> instruction = </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">fetch_instruction</span><span>();
+</span><span>      </span><span style="color:#b48ead;">match Self</span><span>::parse_instruction(instruction) {
+</span><span>        Ok((op_code, addressing_mode, register)) =&gt; {
+</span><span>          </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">increment_pc</span><span>();
+</span><span>        }
+</span><span>        Err(error_message) =&gt; {
+</span><span>          panic!(&quot;</span><span style="color:#a3be8c;">{}, at: {:0x}, cpu_dump: {:?}</span><span>&quot;, error_message, </span><span style="color:#bf616a;">self</span><span>.pc, </span><span style="color:#bf616a;">self</span><span>);
+</span><span>        }
+</span><span>      }
+</span><span>    }
+</span><span>  }
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fetch_instruction</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; </span><span style="color:#b48ead;">u8 </span><span>{
+</span><span>    </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">prg_ram_value</span><span>()
+</span><span>  }
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">parse_instruction</span><span>(</span><span style="color:#bf616a;">instruction</span><span>: </span><span style="color:#b48ead;">u8</span><span>,) -&gt; Result&lt;(OpCode, AddressingMode, Option&lt;IndexRegister&gt;)&gt; {
+</span><span>      </span><span style="color:#b48ead;">let </span><span>(op_code, addressing_mode, register): (OpCode,
+</span><span>						 AddressingMode,
+</span><span>						 Option&lt;IndexRegister&gt;) = </span><span style="color:#b48ead;">match</span><span> instruction {
+</span><span>	  _ =&gt; Err(format!(&quot;</span><span style="color:#a3be8c;">unknown instruction: </span><span style="color:#d08770;">{:0x}</span><span>&quot;, instruction,))?,
+</span><span>      };
+</span><span>      Ok((op_code, addressing_mode, register))
+</span><span>  }
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">impl </span><span>fmt::Debug </span><span style="color:#b48ead;">for </span><span>Cpu {
+</span><span>      </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">fmt</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">f</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>fmt::Formatter) -&gt; fmt::Result {
+</span><span>          write!(f, &quot;</span><span style="color:#a3be8c;">A:</span><span style="color:#d08770;">{:0x}</span><span style="color:#a3be8c;">, PC:</span><span style="color:#d08770;">{:0x}</span><span>&quot;, </span><span style="color:#bf616a;">self</span><span>.pc)
+</span><span>      }
+</span><span>  }
+</span><span>}
+</span><span>
+</span></code></pre>
+<p>If you run <code>cargo run</code>, you get <code>panicked at 'unknown instruction: 78, at: 8000, cpu_dump: A:0, X:0, Y:0, PC:8000'</code>.
+It means instruction is 78, but you have not implemented yet. So, you have to implement all instructions.</p>
+<p>I suggest using <a href="https://github.com/passcod/cargo-watch">cargo watch</a>, to implemnt instructions.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">// src/nes/mod.rs
+</span><span>#[</span><span style="color:#bf616a;">cfg</span><span>(test)]
+</span><span style="color:#b48ead;">mod </span><span>tests {
+</span><span>    </span><span style="color:#b48ead;">use super</span><span>::*;
+</span><span>    #[</span><span style="color:#bf616a;">test</span><span>]
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">run_test</span><span>() {
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> nes = Nes::new(&quot;</span><span style="color:#a3be8c;">sample1.nes</span><span>&quot;);
+</span><span>        nes.</span><span style="color:#96b5b4;">run</span><span>();
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p><code>cargo watch -x test</code> watch source code change and run compile and test automatically. If you implement instruction 78, test run and you get <code>unknown instruction: a2, at: 8001, cpu_dump: PC:8001'</code> because next instruction is <code>a2</code>.</p>
+<p>Whole source code is available <a href="https://github.com/k-o-ta/nes/tree/go-through-instructions-1">here</a>.</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/nes/">NES</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

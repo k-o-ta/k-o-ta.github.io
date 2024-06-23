@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>自作エミュレータで学ぶx86アーキテクチャコンピュータが動く仕組みを徹底理解！をubuntuで進める</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2018-05-27">
+                    2018-05-27
+                </time>
+                
+                 - (3 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <ul>
+<li>OS: ubuntu16.04</li>
+<li>gcc: (Ubuntu/Linaro 6.3.0-18ubuntu2~16.04) 6.3.0 20170519</li>
+</ul>
+<h2 id="Chapter1">Chapter1<a class="zola-anchor" href="#Chapter1" aria-label="Anchor link for: Chapter1"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="1.3">1.3<a class="zola-anchor" href="#1.3" aria-label="Anchor link for: 1.3"><i class="fas fa-link"></i></a> 
+</h3>
+<p>gccコマンドは以下。<code>-m32</code> で32bitバイナリにコンパイルされる</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>gcc -Wl,--entry=func,--oformat=binary -nostdlib -fno-asynchronous-unwind-tables -m32 -o casm-c-sample.bin casm-c-sample.c
+</span></code></pre>
+<span id="continue-reading"></span>
+<p>ndisasmはapt-getでnasmをinstallすると一緒に入ってくる</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>sudo apt-get install nasm
+</span></code></pre>
+<h2 id="Chapter2">Chapter2<a class="zola-anchor" href="#Chapter2" aria-label="Anchor link for: Chapter2"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="2.3">2.3<a class="zola-anchor" href="#2.3" aria-label="Anchor link for: 2.3"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>emu2.3</code>のMakefileを修正する必要がある</p>
+<ul>
+<li><code>TARGET</code>は<code>.exe</code>である必要がないので、<code>TARGET = px86</code></li>
+<li><code>CC</code>でコンパイルに利用するgccを指定している。書籍だとサンプルコード内にあるgccを使うがそれはwindow用なので、ubuntuにinstallされているgccを使う。<code>CC = gcc</code></li>
+<li><code>CC</code>で<code>Z_TOOLS</code>を参照しなくなったので、<code>Z_TOOLS</code>を削除する</li>
+</ul>
+<p>最終的に<code>Makefile</code>は以下のようになる</p>
+<pre data-lang="Makefile" style="background-color:#2b303b;color:#c0c5ce;" class="language-Makefile "><code class="language-Makefile" data-lang="Makefile"><span style="color:#bf616a;">TARGET </span><span>= </span><span style="color:#a3be8c;">px86
+</span><span style="color:#bf616a;">OBJS </span><span>= </span><span style="color:#a3be8c;">main.o
+</span><span>
+</span><span style="color:#bf616a;">CC </span><span>= </span><span style="color:#a3be8c;">gcc
+</span><span style="color:#bf616a;">CFLAGS </span><span>+= </span><span style="color:#a3be8c;">-Wall
+</span><span>
+</span><span style="color:#8fa1b3;">.PHONY</span><span>: </span><span style="color:#a3be8c;">all
+</span><span style="color:#8fa1b3;">all </span><span>:
+</span><span>	</span><span style="color:#bf616a;">make </span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">TARGET</span><span style="color:#b48ead;">)
+</span><span>
+</span><span style="color:#bf616a;">%</span><span style="color:#8fa1b3;">.o </span><span>: </span><span style="color:#bf616a;">%</span><span style="color:#a3be8c;">.c Makefile
+</span><span>	</span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">CC</span><span style="color:#b48ead;">) $(</span><span style="color:#bf616a;">CFLAGS</span><span style="color:#b48ead;">) </span><span style="color:#bf616a;">-c $&lt;
+</span><span>
+</span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">TARGET</span><span style="color:#b48ead;">) </span><span>: </span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">OBJS</span><span style="color:#b48ead;">)</span><span style="color:#a3be8c;"> Makefile
+</span><span>	</span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">CC</span><span style="color:#b48ead;">) </span><span style="color:#bf616a;">-o $@ </span><span style="color:#b48ead;">$(</span><span style="color:#bf616a;">OBJS</span><span style="color:#b48ead;">)
+</span></code></pre>
+<h2 id="Chapter3">Chapter3<a class="zola-anchor" href="#Chapter3" aria-label="Anchor link for: Chapter3"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="3.2,_3.4,_3.7,_3.10,_3.12">3.2, 3.4, 3.7, 3.10, 3.12<a class="zola-anchor" href="#3.2,_3.4,_3.7,_3.10,_3.12" aria-label="Anchor link for: 3.2,_3.4,_3.7,_3.10,_3.12"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>Makefile</code>をChapter2と同様に修正する</p>
+<h3 id="3.7">3.7<a class="zola-anchor" href="#3.7" aria-label="Anchor link for: 3.7"><i class="fas fa-link"></i></a> 
+</h3>
+<p><code>emu3.7</code>のエミュレーターは<code>Makefile</code>をこれまで同様に修正すれば問題ないが、<code>exec-c-test</code>と<code>exec-arg-test</code>の<code>Makefile</code>はそのままではコンパイルできない。<code>CFLAGS</code>に<code>-m32</code>オプションを追加し、<code>LDFLAGS</code>に<code>-m elf_i386</code>オプションを追加する必要がある。
+以下の様な<code>Makefile</code>になる</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>TARGET = test.bin
+</span><span>OBJS = crt0.o test.o
+</span><span>Z_TOOLS = ../z_tools
+</span><span>
+</span><span>CC = gcc
+</span><span>LD = ld
+</span><span>AS = nasm
+</span><span>CFLAGS += -nostdlib -fno-asynchronous-unwind-tables \
+</span><span>	-I$(Z_TOOLS)/i386-elf-gcc/include -g -fno-stack-protector -m32
+</span><span>LDFLAGS += --entry=start --oformat=binary -Ttext 0x7c00 -m elf_i386
+</span><span>
+</span><span>.PHONY: all
+</span><span>all :
+</span><span>	make $(TARGET)
+</span><span>
+</span><span>%.o : %.c Makefile
+</span><span>	$(CC) $(CFLAGS) -c $&lt;
+</span><span>
+</span><span>%.o : %.asm Makefile
+</span><span>	$(AS) -f elf $&lt;
+</span><span>
+</span><span>$(TARGET) : $(OBJS) Makefile
+</span><span>	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+</span></code></pre>
+<p>また、リスト3.29まで実装した段階で<code>exec-c-test</code>を試そうとすると、<code>add_rm32_imm8</code>が未実装のため<code>test.bin</code>が最後まで完走できない。<code>add_rm32_imm8</code>はリスト3.34で実装するので問題はないが、書籍の環境ではこの時点で<code>add_rm32_imm8</code>が必要だったかどうかはわからない。もしかしたら<code>inc_rm32</code>が使われていたのが、gccのバージョンが変わったせいで<code>add_rm32_imm8</code>が使われるようになったのかもしれないが、そこまでは確認していない。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/x86-emulator/">x86-emulator</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

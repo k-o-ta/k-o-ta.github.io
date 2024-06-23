@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>実践ドメイン駆動設計を読んだ | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="実践ドメイン駆動設計を読んだ | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="実践ドメイン駆動設計を読んだ | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>実践ドメイン駆動設計を読んだ</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2019-10-10">
+                    2019-10-10
+                </time>
+                
+                 - (3 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>業務でのアーキテクチャを考えるにあたって<a href="https://www.seshop.com/product/detail/20748">実践ドメイン駆動設計</a>を読んだ。ドメイン駆動設計といえば<a href="https://www.shoeisha.co.jp/book/detail/9784798126708">エリック・エヴァンスのドメイン駆動設計</a>が有名だと思うがそれよりは実装寄りに立った書籍である。<br />
+そのためドメイン駆動設計自体を学びたい人は先にエリック・エヴァンスの方を読むことをおすすめする(もちろん本書にも説明はあるが)。<br />
+本書は全編を通してJavaのコード例が散りばめられており、実践的なテクニックに溢れているがJavaでなくともすぐに取り入れられるものは多い。特にイベント駆動アーキテクチャやメッセージングを使った境界づけられたコンテキスト間の統合は複数マイクロサービスでシステムを構築する場合にはマイクロサービス間の依存関係をコントロールするのに役立つだろう。</p>
+<p>ヘキサゴナルアーキテクチャは<a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">クリーンアーキテクチャで有名なあの同心円図</a>と似たような考え方をしており、いずれにせよドメインモデルが他の何者(たとえばDBなどのインフラ層)に依存しないようにする、というのが肝である。</p>
+<p>ストーリー仕立てで話が進んでいくため、最初から読み進めないと話が理解できない点には注意。一度全体を読んで流れを把握して、後で自分が必要な章をもう一度読むのが良いと思う。あと出てくるコードがまとまったgithubリポジトリが明記されていないがおそらく<a href="https://github.com/VaughnVernon/IDDD_Samples">ここ</a>だと思われる。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/books/">books</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/ddd/">DDD</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/java/">Java</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

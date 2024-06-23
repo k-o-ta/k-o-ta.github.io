@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>データ指向アプリケーションデザインを読んだ | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="データ指向アプリケーションデザインを読んだ | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="データ指向アプリケーションデザインを読んだ | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>データ指向アプリケーションデザインを読んだ</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2019-09-24">
+                    2019-09-24
+                </time>
+                
+                 - (3 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p><a href="https://www.oreilly.co.jp/books/9784873118703/">データ指向アプリケーションデザイン</a>を読んだ。業務で担当しているアプリケーションをマイクロサービスに分割する上でデータ構造をどのように分けていくかの参考にしたかった。<br />
+今担当しているアプリケーションは形は複数システムに分割しているがデータベースは共有している。そこがボトルネックになって障害が発生したり、いびつな実装をせざるを得ないことがあるのでそれを解決したかった。</p>
+<p>マイクロサービス間ではDBを共有しないのが一般的だが、その場合に得られるもの(スケーラビリティなど)や、失うもの(データの一貫性)、できるだけデータの一貫性を保つためにどのような方法が存在するかなどが、かなり具体的かつ丁寧に書かれている。</p>
+<p>記録のシステム(Systems of Record)と導出データという考え方も面白かった。記録のシステムは正となるデータで厳密に記録される。導出データは他のデータを変換した結果であり、失っても良い。こうしてデータの性質を分けておくことで柔軟なシステムにできる。たとえば分析用のデータは必要な属性だけを残したり他のデータと予め結合した導出データにすることで使いやすくできるし、キャッシュなども導出データとして考えられる。何よりデータベースをマイクロサービスごとに分割したときに他システムにデータを提供しなければならないときに、API経由で提供する以外にも導出データとしてメッセージングやKVSなどを通して導出データを提供することができる。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/books/">books</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/distributed-systems/">distributed systems</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

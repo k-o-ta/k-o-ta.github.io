@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Javaパフォーマンスを読んでsolrのパフォーマンス改善を行った | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Javaパフォーマンスを読んでsolrのパフォーマンス改善を行った | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Javaパフォーマンスを読んでsolrのパフォーマンス改善を行った | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Javaパフォーマンスを読んでsolrのパフォーマンス改善を行った</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2019-02-25">
+                    2019-02-25
+                </time>
+                
+                 - (4 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>業務で使っているSolrの検索クエリのレスポンスタイムがしきい値を超えたときのアラートが急増した。原因を調査しようにも知識が足らなすぎたので<a href="https://www.oreilly.co.jp/books/9784873116761/">Javaパフォーマンス</a>を読んだ。</p>
+<p>本書はJavaで開発されたアプリケーションのチューニングをするための本だ。そのためパフォーマンスとは何か、パフォーマンスについて語るときによく使われるスループットやレスポンスタイムといった用語の解説や正しい計測方法から解説される。今回のように既に特定のツール経由でパフォーマンスに関する通知を受けているときはその通知の定義に従う必要があるが、用語の定義を合わせておくのはとても正しい。</p>
+<p>その後、Javaで利用できるパフォーマンスに関するツールの使い方、JITコンパイラの仕組み、ガーベージコレクションの仕組みについての解説がある。今回はこのあたりが問題解決のために役立った(個人的にはGCの仕組みが面白かった)<br />
+今回の事例では95パーセンタイルのレスポンスタイムが悪化しているわけではなく、レスポンスタイムが跳ねる頻度が増えたのでGCのタイミングに巻き込まれることが増えたのだろうとあたりを付けていた。実際書籍を参考にgc_logを解析したところ、YoungGCの発生頻度が2回/分だったのが20回/分に増えていた。また、当時利用していたGCアルゴリズムはCMS GCで、書籍によるとCMS GCではYoungGCでもアプリケーションスレッドがストップするとのことだった。<br />
+実際にYGCの頻度が急増したあたりに何か変更をしたかを調査してみると、それまでsolrクエリを発行する必要のなかった画面で2回facet queryをリクエストする変更をしていた。さらに運の悪いことに同じくらいに海外から同画面への悪意のあるリクエストが高頻度で発生するようになっていた。<br />
+結局、悪意のあるリクエストはアプリケーションに届く手前で遮断し、アラートは落ち着いた。また、別途solrクエリの発行回数を見直したりsolrとJavaのバージョンアップやGCアルゴリズムの変更を検討することとなった。</p>
+<p>パフォーマンス改善は言語独自のチューニングはもちろんのこと、複合要因が絡んでくる(今回も修正した箇所はJavaとは関係なかった)ので難しいが、書籍で読んだ箇所が上手く利用できたので良かった。</p>
+<p>なお、書籍ではその後にベストプラクティスやチューニング方法について記載されている。Javaアプリケーションのパフォーマンス改善を目指す場合は最も参照される箇所だと思う。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/books/">books</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/java/">java</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

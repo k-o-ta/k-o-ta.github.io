@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>みんなのデータ構造読書メモ 第一章(1) | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="みんなのデータ構造読書メモ 第一章(1) | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="みんなのデータ構造読書メモ 第一章(1) | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>みんなのデータ構造読書メモ 第一章(1)</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-08-14">
+                    2020-08-14
+                </time>
+                
+                 - (5 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="第1章">第1章<a class="zola-anchor" href="#第1章" aria-label="Anchor link for: 第1章"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="1.1_効率の必要性">1.1 効率の必要性<a class="zola-anchor" href="#1.1_効率の必要性" aria-label="Anchor link for: 1.1_効率の必要性"><i class="fas fa-link"></i></a> 
+</h3>
+<h4 id="大きなデータセット">大きなデータセット<a class="zola-anchor" href="#大きなデータセット" aria-label="Anchor link for: 大きなデータセット"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li>Googleの検索に8.5秒も必要、とされているのは注釈欄のコンピューターの速度が数ギガヘルツ(数十億回/秒)なのを<script type="math/tex">10^9</script>
+回/秒として、85億件のWebページをすべて見ようとすると(データセットの要素をすべて見るという前提はその前の段落に書いてある)<script type="math/tex">\frac{8.5\times10^8}{10^9} = 8.5</script>
+秒かかるということ</li>
+</ul>
+<span id="continue-reading"></span>
+<ul>
+<li>38250台のサーバーが必要、とされているのは一つのリクエストに8.5秒かかるという前提で複数サーバーで並列処理できた場合、一つのリクエストに1秒でレスポンスするには1/8.5台のサーバーが必要。秒間4500クエリ受け付けているので<script type="math/tex">4500 \times \frac{1}{8.5} = 38250</script>
+台のサーバーが必要ということ</li>
+</ul>
+<h3 id="1.3_数学的背景">1.3 数学的背景<a class="zola-anchor" href="#1.3_数学的背景" aria-label="Anchor link for: 1.3_数学的背景"><i class="fas fa-link"></i></a> 
+</h3>
+<h4 id="1.3.1_指数と対数">1.3.1 指数と対数<a class="zola-anchor" href="#1.3.1_指数と対数" aria-label="Anchor link for: 1.3.1_指数と対数"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li>自然対数と二進対数との比較
+<script type="math/tex;mode=display">\ln k = \frac{\log_2 k}{\log_2 e} = \frac{\log_2 k}{\frac{\log_e e}{log_e 2}} = \log_e 2 \times \log_2 k = \ln 2 \times \log_2 k</script>
+</li>
+</ul>
+<h4 id="1.3.2_階乗">1.3.2 階乗<a class="zola-anchor" href="#1.3.2_階乗" aria-label="Anchor link for: 1.3.2_階乗"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li><script type="math/tex">\ln (n!)</script>
+の近似値はその前で示されているスターリングの近似(<script type="math/tex">n! = \sqrt{2\pi n} (\frac{n}{e})^n e^{\alpha(n)}</script>
+)を使って
+<script type="math/tex;mode=display">\ln (n!) \newline
+= \ln (1 \times 2 \times ... \times n) \newline
+= \ln (\sqrt{2\pi n} (\frac{n}{e})^n e^{\alpha(n)}) \newline
+= \ln \sqrt{2\pi n} + \ln (\frac{n}{e})^n + \ln e^{\alpha(n)} \newline
+= \ln (2\pi n)^\frac{1}{2} + \ln n^n + \ln e^{-n} + \ln e^{\alpha(n)} \newline
+= \frac{1}{2}\ln (2\pi n) + n\ln n - n + \alpha (n)</script>
+</li>
+</ul>
+<h4 id="1.3.3_漸近記法">1.3.3 漸近記法<a class="zola-anchor" href="#1.3.3_漸近記法" aria-label="Anchor link for: 1.3.3_漸近記法"><i class="fas fa-link"></i></a> 
+</h4>
+<p>ビッグオー記法は今までなんとなく使っていたが正しい定義は初めて見た。<script type="math/tex">O(f(n))</script>
+は集合を表していて、nがある程度より大きいときは定数倍しても常に<script type="math/tex">f(n)</script>
+より小さくなる関数の集合、というような意味合いだった。<script type="math/tex">f(n)</script>
+はどんな関数でも構わないはずだが、アルゴリズムの世界でよく使われるのが<script type="math/tex">\alpha</script>
+(定数)、 <script type="math/tex">\log n</script>
+、<script type="math/tex">n^b</script>
+、<script type="math/tex">c^n</script>
+などなのだろう。ある関数が<script type="math/tex">O(f(n))</script>
+に含まれるということは定数倍しても<script type="math/tex">f(n)</script>
+に満たなく、ある関数とはアルゴリズムの世界では例えば実行時間である。つまり実行時間を表す関数が<script type="math/tex">O(f(n))</script>
+に含まれるということは、最悪でも<script type="math/tex">f(n)</script>
+内には実行完了するし、<script type="math/tex">f(n)</script>
+に含まれる関数の間での実行時間の差は大きくても定数倍なので丸めて<script type="math/tex">O(f(n))</script>
+で同じ、といってしまって良いよね、ということである。</p>
+<h4 id="1.3.4_ランダム性と確率">1.3.4 ランダム性と確率<a class="zola-anchor" href="#1.3.4_ランダム性と確率" aria-label="Anchor link for: 1.3.4_ランダム性と確率"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li>コインをk回投げたときの表が出る回数の期待値を期待値の定義を使って求めている。<script type="math/tex">\dbinom{k}{i}</script>
+は
+<script type="math/tex;mode=display">{}_k C _i</script>
+
+のようである。
+二項係数の性質<script type="math/tex">i\dbinom{k}{i} = k\dbinom{k-1}{i-1}</script>
+も、
+<script type="math/tex;mode=display">{}_k C_i = k{}_{k-1} C_{i-1}</script>
+
+で表される。</li>
+</ul>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/algorithm/">algorithm</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/data-structure/">data structure</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

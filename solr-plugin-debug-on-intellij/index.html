@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>intelliJ IDEAを使ったsolr pluginのデバッグ | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="intelliJ IDEAを使ったsolr pluginのデバッグ | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="intelliJ IDEAを使ったsolr pluginのデバッグ | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>intelliJ IDEAを使ったsolr pluginのデバッグ</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-09-24">
+                    2020-09-24
+                </time>
+                
+                 - (2 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>solrのプラグイン開発を行うときにintelliJ IDEAを使ってdebugを行う方法</p>
+<h2 id="手順">手順<a class="zola-anchor" href="#手順" aria-label="Anchor link for: 手順"><i class="fas fa-link"></i></a> 
+</h2>
+<ol>
+<li>plugin用のリポジトリを作成&amp;開発して、jarファイルを生成する(生成されたjarファイルを<code>plugin.jar</code>とする)</li>
+<li><a href="https://github.com/apache/lucene-solr">sorl本体のリポジトリ</a>をpluginと別の場所にcloneしてくる。</li>
+<li>antとivyをインストールする(solr本体をbuildするのに使う)</li>
+<li>solr本体をビルドする</li>
+</ol>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>cd lucene-solr
+</span><span>ant compile
+</span><span>cd solr
+</span><span>ant compile
+</span><span>ant example
+</span></code></pre>
+<ol start="5">
+<li>必要に応じて<code>solr.xml</code>を修正</li>
+<li>pluginで生成したjarファイルをsolr本体の<code>lucene-solr/solr/ext_lib/</code>配下に置く</li>
+<li>lucene-solr/solr配下で <code>bin/solr start -s sample_project_name/solr/ -f -a &quot;-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=7666&quot;</code></li>
+<li>intelliJ IDEAでsolr本体のプロジェクトを作成する。デバッグでステップ実行するのはこのプロジェクト。<code>File &gt; New &gt; Project</code> からプロジェクトを作成する(<code>Project From Existing Source</code>ではない)</li>
+<li><code>Run &gt; Edit Configuration</code>から以下のように設定する。ポイントはSettingsの欄
+<img src="https://www.dropbox.com/s/4vh5wjjbllxvzbk/solor-plugin-debug-on-intellij.png?dl=1" alt="configuration" /></li>
+<li>project paneの<code>lucene-sorl/solr/ext_lib/plugin.jar</code>を右クリックしてAdd As Libraryをクリックして、表示されたポップアップもそのままOKにする</li>
+<li>jarファイルのソースが表示されるようになったはずなので適当な箇所にbreak pointを貼って<code>Run Debug</code>を実行する</li>
+<li>デバック実行時に使うサンプル用のデータをsolrに登録して、<code>http://localhost:8983</code> にsolrリクエストを投げるとbreak pointでstopする</li>
+</ol>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/solr/">solr</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/intellij/">intelliJ</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/java/">java</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

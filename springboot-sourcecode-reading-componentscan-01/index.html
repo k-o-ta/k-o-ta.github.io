@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Spring bootのコンポーネントスキャンのソースコードリーディングのログ | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Spring bootのコンポーネントスキャンのソースコードリーディングのログ | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Spring bootのコンポーネントスキャンのソースコードリーディングのログ | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Spring bootのコンポーネントスキャンのソースコードリーディングのログ</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-08-10">
+                    2020-08-10
+                </time>
+                
+                 - (9 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>spring bootを使うにあたってコンポーネントスキャン周りを理解したかった</p>
+<h2 id="登場人物">登場人物<a class="zola-anchor" href="#登場人物" aria-label="Anchor link for: 登場人物"><i class="fas fa-link"></i></a> 
+</h2>
+<ul>
+<li>コンポーネント: アプリケーションのパーツ(リポジトリの実装とかアルゴリズムの実装とか)
+<ul>
+<li>Springの世界ではDIコンテナで管理されているコンポーネントはBeanと呼ばれる(Bean定義じゃなくてBean実装)</li>
+</ul>
+</li>
+<li>DIコンテナ: コンポーネントを登録する場所
+<ul>
+<li>Configuration: コンポーネントをDIコンテナに登録するときに使用される設定ファイル
+<ul>
+<li>Springの世界ではBean定義と呼ばれる
+<ul>
+<li>コンポーネントを実装しているコードをBean定義と呼べばいいのにと思ったが、<a href="https://www.tutorialspoint.com/spring/spring_bean_definition.htm">beanはmetadataとともに生成される</a>とのことで、コンポーネント(POJO)をDIコンテナから使えるようにbeanとして定義するconfigurationのことをBean定義と呼ぶと理解した。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>ApplicationContext: DIコンテナを触るためのインターフェース</li>
+</ul>
+</li>
+<li>アプリケーション: コンポーネントの利用者
+<ul>
+<li>DIコンテナからBeanをルックアップする</li>
+</ul>
+</li>
+</ul>
+<p>spring bootのエントリーポイント</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// SpringBootMyApplication.java
+</span><span>@</span><span style="color:#bf616a;">SpringBootApplication
+</span><span style="color:#b48ead;">public class </span><span style="color:#ebcb8b;">SpringBootMyApplication </span><span style="color:#eff1f5;">{
+</span><span style="color:#eff1f5;">  </span><span style="color:#b48ead;">public static void </span><span style="color:#8fa1b3;">main</span><span style="color:#eff1f5;">(</span><span style="color:#ebcb8b;">String</span><span style="color:#b48ead;">[] </span><span style="color:#bf616a;">args</span><span style="color:#eff1f5;">) {
+</span><span style="color:#eff1f5;">    </span><span style="color:#ebcb8b;">SpringApplication</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">run</span><span style="color:#eff1f5;">(</span><span style="color:#ebcb8b;">SpringBootMyApplication</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">class</span><span style="color:#eff1f5;">, args);
+</span><span style="color:#eff1f5;">  }
+</span><span style="color:#eff1f5;">}
+</span></code></pre>
+<p>spring bootでは<code>@SpringBootApplication</code>アノテーションが重要な役割を持つ(<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/SpringBootApplication.java">ソース</a>)</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// SpringBootApplication.java
+</span><span style="color:#65737e;">// 省略
+</span><span>@</span><span style="color:#bf616a;">SpringBootConfiguration
+</span><span>@</span><span style="color:#bf616a;">ComponentScan
+</span><span style="color:#65737e;">// 省略
+</span><span style="color:#b48ead;">public @interface </span><span style="color:#ebcb8b;">SpringBootApplication </span><span style="color:#eff1f5;">{
+</span><span style="color:#eff1f5;">  </span><span style="color:#65737e;">// 省略
+</span><span style="color:#eff1f5;">}
+</span></code></pre>
+<p><code>@SpringBootApplication</code>は<code>@ComponentScan</code>を継承している。<code>@CompnenntScan</code>はSpringで定義されており、はvalue属性に指定したパッケージ(デフォルトでは付与されたクラスと同じパッケージ)配下のコンポーネントをスキャンしてBeanとして登録できる。たとえば、以下のように書く</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span>@</span><span style="color:#bf616a;">Configuration </span><span style="color:#65737e;">// configファイルであることの宣言
+</span><span>@</span><span style="color:#bf616a;">ComponentScan</span><span>(&quot;</span><span style="color:#a3be8c;">com.myexmple.app</span><span>&quot;) </span><span style="color:#65737e;">// コンポーネントスキャン
+</span><span style="color:#b48ead;">public class </span><span style="color:#ebcb8b;">AppConfig </span><span style="color:#eff1f5;">{
+</span><span style="color:#eff1f5;">  @</span><span style="color:#bf616a;">Bean </span><span style="color:#65737e;">// メソッド名: bean名, 返り値: beanのインスタンス
+</span><span style="color:#eff1f5;">  </span><span style="color:#ebcb8b;">MyRepository </span><span style="color:#8fa1b3;">myRepository </span><span style="color:#eff1f5;">() {
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">return new </span><span style="color:#ebcb8b;">MyRepositoryImpl</span><span style="color:#eff1f5;">();
+</span><span style="color:#eff1f5;">  }
+</span><span style="color:#eff1f5;">  @</span><span style="color:#bf616a;">Bean
+</span><span style="color:#eff1f5;">  </span><span style="color:#ebcb8b;">MyService </span><span style="color:#8fa1b3;">myService</span><span style="color:#eff1f5;">(</span><span style="color:#ebcb8b;">MyRepository </span><span style="color:#bf616a;">myRepository</span><span style="color:#eff1f5;">) { </span><span style="color:#65737e;">// 他のコンポーネントを注入できる
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">return new </span><span style="color:#ebcb8b;">MyServiceImpl</span><span style="color:#eff1f5;">(myRepository);
+</span><span style="color:#eff1f5;">  }
+</span><span style="color:#eff1f5;">  @</span><span style="color:#bf616a;">Bean
+</span><span style="color:#eff1f5;">  </span><span style="color:#ebcb8b;">MyService </span><span style="color:#8fa1b3;">myService2 </span><span style="color:#eff1f5;">() {
+</span><span style="color:#eff1f5;">    </span><span style="color:#b48ead;">return new </span><span style="color:#ebcb8b;">MyServiceImpl2</span><span style="color:#eff1f5;">(); </span><span style="color:#65737e;">// 同じインターフェースを満たした違う実装
+</span><span style="color:#eff1f5;">  }
+</span><span style="color:#eff1f5;">}
+</span></code></pre>
+<p>ConfigurationはBean定義でもあるので<code>@Bean</code>というアノテーションを付けるとコンポーネントスキャンしたファイルをBeanとしてDIコンテナに登録してくれるが、Spring BootではコンポーネントのPOJOに<code>@Component</code>のようなアノテーションを付けることでConfiguration側で<code>@Bean</code>を用いたメソッドを作らなくてもDIコンテナに登録されるようになる。(この仕組はSpringのもの)</p>
+<p><code>@ComponentScan</code>の動きを見ていく</p>
+<p>まずエントリーポイントで<code>SpringApplication.run(SpringBootMyApplication.class, args);</code>が実行される
+<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/SpringApplication.java#L1225-L1227">ソース</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">public static </span><span style="color:#ebcb8b;">ConfigurableApplicationContext </span><span style="color:#bf616a;">run</span><span>(</span><span style="color:#ebcb8b;">Class</span><span>&lt;?&gt; primarySource, </span><span style="color:#ebcb8b;">String</span><span>... args) {
+</span><span>        </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">run</span><span>(</span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">Class</span><span>&lt;?&gt;[] { primarySource }, args);
+</span><span>}
+</span></code></pre>
+<p>上記のrunは<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/SpringApplication.java#L1236-L1238">以下</a>を呼び出す</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">public static </span><span style="color:#ebcb8b;">ConfigurableApplicationContext </span><span style="color:#bf616a;">run</span><span>(</span><span style="color:#ebcb8b;">Class</span><span>&lt;?&gt;</span><span style="color:#b48ead;">[]</span><span> primarySources, </span><span style="color:#ebcb8b;">String</span><span style="color:#b48ead;">[]</span><span> args) {
+</span><span>	</span><span style="color:#b48ead;">return new </span><span style="color:#ebcb8b;">SpringApplication</span><span>(primarySources).</span><span style="color:#bf616a;">run</span><span>(args);
+</span><span>}
+</span></code></pre>
+<p>その後<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/SpringApplication.java#L298-L337">以下</a>が呼ばれる</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">public </span><span style="color:#ebcb8b;">ConfigurableApplicationContext </span><span style="color:#bf616a;">run</span><span>(</span><span style="color:#ebcb8b;">String</span><span>... args) {
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#ebcb8b;">ConfigurableApplicationContext</span><span> context = </span><span style="color:#d08770;">null</span><span>;
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#b48ead;">try </span><span>{
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>    context = </span><span style="color:#bf616a;">createApplicationContext</span><span>();
+</span><span>    </span><span style="color:#bf616a;">prepareContext</span><span>(context, environment, listeners, applicationArguments, printedBanner);
+</span><span>    </span><span style="color:#bf616a;">refreshContext</span><span>(context);
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>  }
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><code>createApplicationContext()</code>では <a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/servlet/context/ServletWebServerApplicationContext.java"><code>ServletWebServerApplicationContext</code></a>か、<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/reactive/context/AnnotationConfigReactiveWebServerApplicationContext.java"><code>AnnotationConfigReactiveWebServerApplicationContext</code></a>か、<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/AnnotationConfigApplicationContext.java"><code>AnnotationConfigApplicationContext</code></a>のいずれかのクラスが生成される。前者2つはSpringBootで最後の一つはSpringで定義されている。いずれも<code>AbstractApplicationContext</code>を継承している</p>
+<p>refreshContextの定義は<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/SpringApplication.java#L396-L406">以下</a>の通り</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">private</span><span> void </span><span style="color:#bf616a;">refreshContext</span><span>(</span><span style="color:#ebcb8b;">ConfigurableApplicationContext</span><span> context) {
+</span><span>  </span><span style="color:#bf616a;">refresh</span><span>((</span><span style="color:#ebcb8b;">ApplicationContext</span><span>) context);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p>そして<a href="https://github.com/spring-projects/spring-boot/blob/v2.3.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/SpringApplication.java#L741-L759">refresh</a>が呼ばれる</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">protected</span><span> void </span><span style="color:#bf616a;">refresh</span><span>(</span><span style="color:#ebcb8b;">ApplicationContext</span><span> applicationContext) {
+</span><span>  </span><span style="color:#ebcb8b;">Assert</span><span>.</span><span style="color:#bf616a;">isInstanceOf</span><span>(</span><span style="color:#ebcb8b;">ConfigurableApplicationContext</span><span>.</span><span style="color:#bf616a;">class</span><span>, applicationContext);
+</span><span>  </span><span style="color:#bf616a;">refresh</span><span>((</span><span style="color:#ebcb8b;">ConfigurableApplicationContext</span><span>) applicationContext);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">protected</span><span> void </span><span style="color:#bf616a;">refresh</span><span>(</span><span style="color:#ebcb8b;">ConfigurableApplicationContext</span><span> applicationContext) {
+</span><span>  applicationContext.</span><span style="color:#bf616a;">refresh</span><span>();
+</span><span>}
+</span></code></pre>
+<p><code>createApplicationContext()</code>で生成したインスタンスのクラスはいずれも<code>AbstractApplicationContext</code>を継承していたが、その中で<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/support/AbstractApplicationContext.java#L516-L579">refreshは定義されている</a>。ここでようやくSpringBootからSpring本体のコードに入る</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// AbstractApplicationContext.java
+</span><span style="color:#b48ead;">public</span><span> void </span><span style="color:#bf616a;">refresh</span><span>() throws </span><span style="color:#ebcb8b;">BeansException</span><span>, </span><span style="color:#ebcb8b;">IllegalStateException </span><span>{
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#65737e;">// Tell the subclass to refresh the internal bean factory.
+</span><span>  </span><span style="color:#ebcb8b;">ConfigurableListableBeanFactory</span><span> beanFactory = </span><span style="color:#bf616a;">obtainFreshBeanFactory</span><span>();
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">try </span><span>{
+</span><span>    </span><span style="color:#65737e;">// Invoke factory processors registered as beans in the context.
+</span><span>    </span><span style="color:#bf616a;">invokeBeanFactoryPostProcessors</span><span>(beanFactory);
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>  }
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/support/AbstractApplicationContext.java#L706-L715">invokeBeanFactoryPostProcessors</a>が呼び出される</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// AbstractApplicationContext.java
+</span><span style="color:#b48ead;">protected</span><span> void </span><span style="color:#bf616a;">invokeBeanFactoryPostProcessors</span><span>(</span><span style="color:#ebcb8b;">ConfigurableListableBeanFactory</span><span> beanFactory) {
+</span><span>  </span><span style="color:#ebcb8b;">PostProcessorRegistrationDelegate</span><span>.</span><span style="color:#bf616a;">invokeBeanFactoryPostProcessors</span><span>(beanFactory, </span><span style="color:#bf616a;">getBeanFactoryPostProcessors</span><span>());
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/support/PostProcessorRegistrationDelegate.java#L56-L187">PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors</a>が呼び出される</p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// PostProcessorRegistrationDelegate.java
+</span><span style="color:#b48ead;">public static</span><span> void </span><span style="color:#bf616a;">invokeBeanFactoryPostProcessors</span><span>(</span><span style="color:#ebcb8b;">ConfigurableListableBeanFactory</span><span> beanFactory, </span><span style="color:#ebcb8b;">List</span><span>&lt;</span><span style="color:#ebcb8b;">BeanFactoryPostProcessor</span><span>&gt; beanFactoryPostProcessors) {
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#ebcb8b;">BeanDefinitionRegistryPostProcessor</span><span> registryProcessor = (</span><span style="color:#ebcb8b;">BeanDefinitionRegistryPostProcessor</span><span>) postProcessor;
+</span><span>  registryProcessor.</span><span style="color:#bf616a;">postProcessBeanDefinitionRegistry</span><span>(registry);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassPostProcessor.java#L223-L237">ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ConfigurationClassPostProcessor.java
+</span><span style="color:#b48ead;">public</span><span> void </span><span style="color:#bf616a;">postProcessBeanDefinitionRegistry</span><span>(</span><span style="color:#ebcb8b;">BeanDefinitionRegistry</span><span> registry) {
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#bf616a;">processConfigBeanDefinitions</span><span>(registry);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassPostProcessor.java#L265-L366">processConfigBeanDefinitions</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ConfigurationClassPostProcessor.java
+</span><span style="color:#b48ead;">public</span><span> void </span><span style="color:#bf616a;">processConfigBeanDefinitions</span><span>(</span><span style="color:#ebcb8b;">BeanDefinitionRegistry</span><span> registry) {
+</span><span>  </span><span style="color:#ebcb8b;">List</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; configCandidates = </span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">ArrayList</span><span>&lt;&gt;();
+</span><span>  </span><span style="color:#ebcb8b;">String</span><span style="color:#b48ead;">[]</span><span> candidateNames = registry.</span><span style="color:#bf616a;">getBeanDefinitionNames</span><span>();
+</span><span>  </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#ebcb8b;">String</span><span> beanName : candidateNames) {
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>    configCandidates.</span><span style="color:#bf616a;">add</span><span>(</span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>(beanDef, beanName));
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>  }
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>
+</span><span>  </span><span style="color:#65737e;">// Parse each @Configuration class
+</span><span>  </span><span style="color:#ebcb8b;">ConfigurationClassParser</span><span> parser = </span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">ConfigurationClassParser</span><span>(
+</span><span>    </span><span style="color:#bf616a;">this</span><span>.metadataReaderFactory, </span><span style="color:#bf616a;">this</span><span>.problemReporter, </span><span style="color:#bf616a;">this</span><span>.environment,
+</span><span>    </span><span style="color:#bf616a;">this</span><span>.resourceLoader, </span><span style="color:#bf616a;">this</span><span>.componentScanBeanNameGenerator, registry);
+</span><span>  </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; candidates = </span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">LinkedHashSet</span><span>&lt;&gt;(configCandidates);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  parser.</span><span style="color:#bf616a;">parse</span><span>(candidates);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><code>@Configuration</code>の付与されたクラス(Configurationファイル)を<code>parser.parse(candidates);</code>でパースしている。<code>@Configuration</code>アノテーションは特に説明していなかったが、classに付与することでConfigurationファイルとして扱えるようにするためのアノテーションだ。<code>@SpringBootApplication</code> -&gt; <code>@SpringBootConfiguration</code> -&gt; <code>@Configuration</code>という継承関係になっている。
+<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L169-L190">ConfigurationClassParser.parse</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#b48ead;">public</span><span> void </span><span style="color:#bf616a;">parse</span><span>(</span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; configCandidates) {
+</span><span>  </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span> holder : configCandidates) {
+</span><span>    </span><span style="color:#ebcb8b;">BeanDefinition</span><span> bd = holder.</span><span style="color:#bf616a;">getBeanDefinition</span><span>();
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(bd instanceof </span><span style="color:#ebcb8b;">AnnotatedBeanDefinition</span><span>) {
+</span><span>      </span><span style="color:#bf616a;">parse</span><span>(((</span><span style="color:#ebcb8b;">AnnotatedBeanDefinition</span><span>) bd).</span><span style="color:#bf616a;">getMetadata</span><span>(), holder.</span><span style="color:#bf616a;">getBeanName</span><span>());
+</span><span>    }
+</span><span>    </span><span style="color:#b48ead;">else if </span><span>(bd instanceof </span><span style="color:#ebcb8b;">AbstractBeanDefinition </span><span>&amp;&amp; ((</span><span style="color:#ebcb8b;">AbstractBeanDefinition</span><span>) bd).</span><span style="color:#bf616a;">hasBeanClass</span><span>()) {
+</span><span>      </span><span style="color:#bf616a;">parse</span><span>(((</span><span style="color:#ebcb8b;">AbstractBeanDefinition</span><span>) bd).</span><span style="color:#bf616a;">getBeanClass</span><span>(), holder.</span><span style="color:#bf616a;">getBeanName</span><span>());
+</span><span>    }
+</span><span>    </span><span style="color:#b48ead;">else </span><span>{
+</span><span>      </span><span style="color:#bf616a;">parse</span><span>(bd.</span><span style="color:#bf616a;">getBeanClassName</span><span>(), holder.</span><span style="color:#bf616a;">getBeanName</span><span>());
+</span><span>    }
+</span><span>    </span><span style="color:#65737e;">// 省略
+</span><span>  }
+</span><span>}
+</span></code></pre>
+<p>それぞれparseメソッドを呼び出している。これらの定義は<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L195-L207">以下</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ConfigurationClassParser.java
+</span><span style="color:#b48ead;">protected final</span><span> void </span><span style="color:#bf616a;">parse</span><span>(@</span><span style="color:#ebcb8b;">Nullable String</span><span> className, </span><span style="color:#ebcb8b;">String</span><span> beanName) throws </span><span style="color:#ebcb8b;">IOException </span><span>{
+</span><span>	</span><span style="color:#ebcb8b;">Assert</span><span>.</span><span style="color:#bf616a;">notNull</span><span>(className, &quot;</span><span style="color:#a3be8c;">No bean class name for configuration class bean definition</span><span>&quot;);
+</span><span>	</span><span style="color:#ebcb8b;">MetadataReader</span><span> reader = </span><span style="color:#bf616a;">this</span><span>.metadataReaderFactory.</span><span style="color:#bf616a;">getMetadataReader</span><span>(className);
+</span><span>	</span><span style="color:#bf616a;">processConfigurationClass</span><span>(</span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">ConfigurationClass</span><span>(reader, beanName), </span><span style="color:#d08770;">DEFAULT_EXCLUSION_FILTER</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">protected final</span><span> void </span><span style="color:#bf616a;">parse</span><span>(</span><span style="color:#ebcb8b;">Class</span><span>&lt;?&gt; clazz, </span><span style="color:#ebcb8b;">String</span><span> beanName) throws </span><span style="color:#ebcb8b;">IOException </span><span>{
+</span><span>	</span><span style="color:#bf616a;">processConfigurationClass</span><span>(</span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">ConfigurationClass</span><span>(clazz, beanName), </span><span style="color:#d08770;">DEFAULT_EXCLUSION_FILTER</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">protected final</span><span> void </span><span style="color:#bf616a;">parse</span><span>(</span><span style="color:#ebcb8b;">AnnotationMetadata</span><span> metadata, </span><span style="color:#ebcb8b;">String</span><span> beanName) throws </span><span style="color:#ebcb8b;">IOException </span><span>{
+</span><span>	</span><span style="color:#bf616a;">processConfigurationClass</span><span>(</span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">ConfigurationClass</span><span>(metadata, beanName), </span><span style="color:#d08770;">DEFAULT_EXCLUSION_FILTER</span><span>);
+</span><span>}
+</span></code></pre>
+<p>いずれにせよ、<code>processConfigurationClass</code>を呼び出している
+<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L224-L254">ConfigurationClassParser.processConfigurationClass</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ConfigurationClassParser.java
+</span><span style="color:#b48ead;">protected</span><span> void </span><span style="color:#bf616a;">processConfigurationClass</span><span>(</span><span style="color:#ebcb8b;">ConfigurationClass</span><span> configClass, </span><span style="color:#ebcb8b;">Predicate</span><span>&lt;</span><span style="color:#ebcb8b;">String</span><span>&gt; filter) throws </span><span style="color:#ebcb8b;">IOException </span><span>{
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#ebcb8b;">SourceClass</span><span> sourceClass = </span><span style="color:#bf616a;">asSourceClass</span><span>(configClass, filter);
+</span><span>  </span><span style="color:#b48ead;">do</span><span>{
+</span><span>    sourceClass = </span><span style="color:#bf616a;">doProcessConfigurationClass</span><span>(configClass, sourceClass, filter);
+</span><span>  }
+</span><span>  </span><span style="color:#b48ead;">while </span><span>(sourceClass != </span><span style="color:#d08770;">null</span><span>);
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ConfigurationClassParser.java#L256-L346">ConfigurationClassParser.doProcessConfigurationClass</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ConfigurationClassParser.java
+</span><span style="color:#b48ead;">protected final </span><span style="color:#ebcb8b;">SourceClass </span><span style="color:#bf616a;">doProcessConfigurationClass</span><span>(
+</span><span>  </span><span style="color:#ebcb8b;">ConfigurationClass</span><span> configClass, </span><span style="color:#ebcb8b;">SourceClass</span><span> sourceClass, </span><span style="color:#ebcb8b;">Predicate</span><span>&lt;</span><span style="color:#ebcb8b;">String</span><span>&gt; filter)
+</span><span>  throws </span><span style="color:#ebcb8b;">IOException </span><span>{
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#65737e;">// Process any @ComponentScan annotations
+</span><span>  </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">AnnotationAttributes</span><span>&gt; componentScans = </span><span style="color:#ebcb8b;">AnnotationConfigUtils</span><span>.</span><span style="color:#bf616a;">attributesForRepeatable</span><span>(
+</span><span>    sourceClass.</span><span style="color:#bf616a;">getMetadata</span><span>(), </span><span style="color:#ebcb8b;">ComponentScans</span><span>.</span><span style="color:#bf616a;">class</span><span>, </span><span style="color:#ebcb8b;">ComponentScan</span><span>.</span><span style="color:#bf616a;">class</span><span>);
+</span><span>  </span><span style="color:#b48ead;">if </span><span>(!componentScans.</span><span style="color:#bf616a;">isEmpty</span><span>() &amp;&amp; !</span><span style="color:#bf616a;">this</span><span>.conditionEvaluator.</span><span style="color:#bf616a;">shouldSkip</span><span>(sourceClass.</span><span style="color:#bf616a;">getMetadata</span><span>(), </span><span style="color:#ebcb8b;">ConfigurationPhase</span><span>.</span><span style="color:#d08770;">REGISTER_BEAN</span><span>)) {
+</span><span>    </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#ebcb8b;">AnnotationAttributes</span><span> componentScan : componentScans) {
+</span><span>      </span><span style="color:#65737e;">// The config class is annotated with @ComponentScan -&gt; perform the scan immediately
+</span><span>      </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; scannedBeanDefinitions = </span><span style="color:#bf616a;">this</span><span>.componentScanParser.</span><span style="color:#bf616a;">parse</span><span>(componentScan, sourceClass.</span><span style="color:#bf616a;">getMetadata</span><span>().</span><span style="color:#bf616a;">getClassName</span><span>());
+</span><span>      </span><span style="color:#65737e;">// 省略
+</span><span>    }
+</span><span>  }
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><code>this.componentScanParser.parse</code>は<code>ComponentScanAnnotationParser.parse</code>である
+<a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ComponentScanAnnotationParser.java#L76-L133">ComponentScanAnnotationParser.parse</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ComponentScanAnnotationParser.java
+</span><span style="color:#b48ead;">public </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; </span><span style="color:#bf616a;">parse</span><span>(</span><span style="color:#ebcb8b;">AnnotationAttributes</span><span> componentScan, final </span><span style="color:#ebcb8b;">String</span><span> declaringClass) {
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#b48ead;">return</span><span> scanner.</span><span style="color:#bf616a;">doScan</span><span>(</span><span style="color:#ebcb8b;">StringUtils</span><span>.</span><span style="color:#bf616a;">toStringArray</span><span>(basePackages));
+</span><span>}
+</span></code></pre>
+<p><a href="https://github.com/spring-projects/spring-framework/blob/v5.2.8.RELEASE/spring-context/src/main/java/org/springframework/context/annotation/ClassPathBeanDefinitionScanner.java#L264-L297">ClassPathBeanDefinitionScanner.doScan</a></p>
+<pre data-lang="java" style="background-color:#2b303b;color:#c0c5ce;" class="language-java "><code class="language-java" data-lang="java"><span style="color:#65737e;">// ClassPathBeanDefinitionScanner.java
+</span><span style="color:#b48ead;">protected </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>&gt; </span><span style="color:#bf616a;">doScan</span><span>(</span><span style="color:#ebcb8b;">String</span><span>... basePackages) {
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>  </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#ebcb8b;">String</span><span> basePackage : basePackages) {
+</span><span>    </span><span style="color:#ebcb8b;">Set</span><span>&lt;</span><span style="color:#ebcb8b;">BeanDefinition</span><span>&gt; candidates = </span><span style="color:#bf616a;">findCandidateComponents</span><span>(basePackage);
+</span><span>    </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#ebcb8b;">BeanDefinition</span><span> candidate : candidates) {
+</span><span>      </span><span style="color:#ebcb8b;">ScopeMetadata</span><span> scopeMetadata = </span><span style="color:#bf616a;">this</span><span>.scopeMetadataResolver.</span><span style="color:#bf616a;">resolveScopeMetadata</span><span>(candidate);
+</span><span>      candidate.</span><span style="color:#bf616a;">setScope</span><span>(scopeMetadata.</span><span style="color:#bf616a;">getScopeName</span><span>());
+</span><span>      </span><span style="color:#65737e;">// 省略
+</span><span>      </span><span style="color:#b48ead;">if </span><span>(candidate instanceof </span><span style="color:#ebcb8b;">AnnotatedBeanDefinition</span><span>) {
+</span><span>        </span><span style="color:#ebcb8b;">AnnotationConfigUtils</span><span>.</span><span style="color:#bf616a;">processCommonDefinitionAnnotations</span><span>((</span><span style="color:#ebcb8b;">AnnotatedBeanDefinition</span><span>) candidate);
+</span><span>      }
+</span><span>      </span><span style="color:#65737e;">// 省略
+</span><span>      </span><span style="color:#b48ead;">if </span><span>(</span><span style="color:#bf616a;">checkCandidate</span><span>(beanName, candidate)) {
+</span><span>        </span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span> definitionHolder = </span><span style="color:#b48ead;">new </span><span style="color:#ebcb8b;">BeanDefinitionHolder</span><span>(candidate, beanName);
+</span><span>        definitionHolder = </span><span style="color:#ebcb8b;">AnnotationConfigUtils</span><span>.</span><span style="color:#bf616a;">applyScopedProxyMode</span><span>(scopeMetadata, definitionHolder, </span><span style="color:#bf616a;">this</span><span>.registry);
+</span><span>        beanDefinitions.</span><span style="color:#bf616a;">add</span><span>(definitionHolder);
+</span><span>        </span><span style="color:#bf616a;">registerBeanDefinition</span><span>(definitionHolder, </span><span style="color:#bf616a;">this</span><span>.registry);
+</span><span>      }
+</span><span>    }
+</span><span>  }
+</span><span>  </span><span style="color:#65737e;">// 省略
+</span><span>}
+</span></code></pre>
+<p><code>registerBeanDefinition</code>でbean定義を登録していると思われる</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/java/">java</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/springboot/">springboot</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/spring/">spring</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/componentscan/">componentscan</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

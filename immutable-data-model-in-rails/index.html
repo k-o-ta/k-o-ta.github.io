@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>railsでイミュータブルデータモデルを試してみる | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="railsでイミュータブルデータモデルを試してみる | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="railsでイミュータブルデータモデルを試してみる | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>railsでイミュータブルデータモデルを試してみる</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2021-12-25">
+                    2021-12-25
+                </time>
+                
+                 - (7 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/immutable-data-model-in-rails/#イミュータブルデータモデルとは" class="toc-link">
+    イミュータブルデータモデルとは
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/immutable-data-model-in-rails/#この記事のゴール" class="toc-link">
+    この記事のゴール
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/immutable-data-model-in-rails/#環境" class="toc-link">
+    環境
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/immutable-data-model-in-rails/#題材" class="toc-link">
+    題材
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/immutable-data-model-in-rails/#実装" class="toc-link">
+    実装
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/immutable-data-model-in-rails/#migration" class="toc-link">
+    migration
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/immutable-data-model-in-rails/#models" class="toc-link">
+    models
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/immutable-data-model-in-rails/#spec" class="toc-link">
+    spec
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="イミュータブルデータモデルとは">イミュータブルデータモデルとは<a class="zola-anchor" href="#イミュータブルデータモデルとは" aria-label="Anchor link for: イミュータブルデータモデルとは"><i class="fas fa-link"></i></a> 
+</h2>
+<p>データモデルにおいて、モデルに対してUpdateを行わない手法。<a href="https://scrapbox.io/kawasima/%E3%82%A4%E3%83%9F%E3%83%A5%E3%83%BC%E3%82%BF%E3%83%96%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF%E3%83%A2%E3%83%87%E3%83%AB">kawasimaさんのscrapbox</a>が詳しい</p>
+<h2 id="この記事のゴール">この記事のゴール<a class="zola-anchor" href="#この記事のゴール" aria-label="Anchor link for: この記事のゴール"><i class="fas fa-link"></i></a> 
+</h2>
+<p>railsでDBに対してupdateを行わない方法を見つける</p>
+<h2 id="環境">環境<a class="zola-anchor" href="#環境" aria-label="Anchor link for: 環境"><i class="fas fa-link"></i></a> 
+</h2>
+<ul>
+<li>Ruby: 3.1.0</li>
+<li>Rails: 7.0.2.2</li>
+<li>DB: PostgresSQL 14.2</li>
+</ul>
+<h2 id="題材">題材<a class="zola-anchor" href="#題材" aria-label="Anchor link for: 題材"><i class="fas fa-link"></i></a> 
+</h2>
+<p>なんらかの記事(<code>post</code>)とその発行(<code>post_publish</code>)、発行の取消し(<code>post_publish_delete</code>)について扱う。</p>
+<p><img src="/content/immutable-data-model-in-rails/models.svg" alt="models" /></p>
+<details> 
+<summary>PlantUML記法</summary>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>@startuml models
+</span><span>
+</span><span>Post ||..|{ PostPublish
+</span><span>PostPublish ||..o|PostPublishDelete
+</span><span>
+</span><span>@enduml
+</span></code></pre>
+</details>
+<h2 id="実装">実装<a class="zola-anchor" href="#実装" aria-label="Anchor link for: 実装"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="migration">migration<a class="zola-anchor" href="#migration" aria-label="Anchor link for: migration"><i class="fas fa-link"></i></a> 
+</h3>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># postのカラムは簡単にするためtitleとauthorのみ
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">CreatePosts </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ActiveRecord::Migration</span><span>[</span><span style="color:#d08770;">7.0</span><span>]
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">change
+</span><span>    create_table </span><span style="color:#a3be8c;">:posts </span><span style="color:#b48ead;">do </span><span>|</span><span style="color:#bf616a;">t</span><span>|
+</span><span>      t.string </span><span style="color:#a3be8c;">:title</span><span>, </span><span style="color:#a3be8c;">null: </span><span style="color:#d08770;">false
+</span><span>      t.string </span><span style="color:#a3be8c;">:author</span><span>, </span><span style="color:#a3be8c;">null: </span><span style="color:#d08770;">false
+</span><span>
+</span><span>      t.timestamps
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">CreatePostPublishes </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ActiveRecord::Migration</span><span>[</span><span style="color:#d08770;">7.0</span><span>]
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">change
+</span><span>    create_table </span><span style="color:#a3be8c;">:post_publishes </span><span style="color:#b48ead;">do </span><span>|</span><span style="color:#bf616a;">t</span><span>|
+</span><span>      t.references </span><span style="color:#a3be8c;">:post</span><span>, </span><span style="color:#a3be8c;">null: </span><span style="color:#d08770;">false</span><span>, </span><span style="color:#a3be8c;">foreign_key: </span><span>{ </span><span style="color:#a3be8c;">on_delete: :cascade </span><span>}
+</span><span>      t.date   </span><span style="color:#a3be8c;">:published_at</span><span>, </span><span style="color:#a3be8c;">null: </span><span style="color:#d08770;">false
+</span><span>
+</span><span>      t.timestamps
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    </span><span style="color:#65737e;"># 今回はidではなく時刻でイベントの順序を判断している
+</span><span>    add_index </span><span style="color:#a3be8c;">:post_publishes</span><span>, %i[</span><span style="color:#a3be8c;">created_at post_id</span><span>], </span><span style="color:#a3be8c;">unique: </span><span style="color:#d08770;">true
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">CreatePostPublishDeletes </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ActiveRecord::Migration</span><span>[</span><span style="color:#d08770;">7.0</span><span>]
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">change
+</span><span>    create_table </span><span style="color:#a3be8c;">:post_publish_deletes </span><span style="color:#b48ead;">do </span><span>|</span><span style="color:#bf616a;">t</span><span>|
+</span><span>      t.references </span><span style="color:#a3be8c;">:post_publish</span><span>, </span><span style="color:#a3be8c;">null: </span><span style="color:#d08770;">false</span><span>, </span><span style="color:#a3be8c;">foreign_key: </span><span>{ </span><span style="color:#a3be8c;">on_delete: :cascade </span><span>}
+</span><span>
+</span><span>      t.timestamps
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    add_index </span><span style="color:#a3be8c;">:post_publish_deletes</span><span>, %i[</span><span style="color:#a3be8c;">created_at post_publish_id</span><span>], </span><span style="color:#a3be8c;">unique: </span><span style="color:#d08770;">true
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span></code></pre>
+<h3 id="models">models<a class="zola-anchor" href="#models" aria-label="Anchor link for: models"><i class="fas fa-link"></i></a> 
+</h3>
+<h4 id="最新のレコードがほしい">最新のレコードがほしい<a class="zola-anchor" href="#最新のレコードがほしい" aria-label="Anchor link for: 最新のレコードがほしい"><i class="fas fa-link"></i></a> 
+</h4>
+<p>post - post_publishは1対nの関係を持つが、大抵のケースではpostに紐づく最新のpost_publishのみが必要になるだろう。
+この場合、<code>.with_latest_publish</code>のようにpost_publishを自己結合させることで最新のpost_publishが結びついたpostを取得することができる(post_publishが結びつかないpostはそのまま取得できる)</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># app/models/post.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Post </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationRecord
+</span><span>
+</span><span>  has_many </span><span style="color:#a3be8c;">:post_publishes
+</span><span>
+</span><span>  scope </span><span style="color:#a3be8c;">:with_latest_publish</span><span>, </span><span style="color:#96b5b4;">lambda </span><span>{
+</span><span>    joins(&lt;&lt;~SQL)
+</span><span>        </span><span style="color:#b48ead;">LEFT OUTER JOIN</span><span> post_publishes AS new_post_publishes
+</span><span>          ON </span><span style="color:#d08770;">post_publishes</span><span>.</span><span style="color:#d08770;">post_id </span><span>= </span><span style="color:#d08770;">new_post_publishes</span><span>.</span><span style="color:#d08770;">post_id
+</span><span>          AND </span><span style="color:#d08770;">post_publishes</span><span>.</span><span style="color:#d08770;">created_at </span><span>&lt; </span><span style="color:#d08770;">new_post_publishes</span><span>.</span><span style="color:#d08770;">created_at
+</span><span style="color:#a3be8c;">    </span><span>SQL
+</span><span>      .where(&#39;</span><span style="color:#a3be8c;">new_post_publishes.post_id</span><span>&#39;: </span><span style="color:#d08770;">nil</span><span>)
+</span><span>      .eager_load(</span><span style="color:#a3be8c;">:post_publishes</span><span>)
+</span><span>  }
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h4 id="publishイベント発生">publishイベント発生<a class="zola-anchor" href="#publishイベント発生" aria-label="Anchor link for: publishイベント発生"><i class="fas fa-link"></i></a> 
+</h4>
+<p>publishイベントが発生したときは、postインスタンスからpublishインスタンスを生成する。
+has_manyに記載したassociation名に<code>.create</code>メソッドが使える。今回だと<code>post_publishes.create</code>と書ける。このときassociation先のデータが0件でも問題ない。post_publishの方でvalidationを設定しておけばvalidationもしてくれる。</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># app/models/post.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Post </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationRecord
+</span><span>
+</span><span>  has_many </span><span style="color:#a3be8c;">:post_publishes
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">publish_at!</span><span>(</span><span style="color:#bf616a;">at </span><span>= </span><span style="color:#ebcb8b;">Date</span><span>.today, </span><span style="color:#bf616a;">created_at </span><span>= </span><span style="color:#ebcb8b;">Time</span><span>.zone.now)
+</span><span>    post_publishes.create!(</span><span style="color:#a3be8c;">published_at:</span><span> at, </span><span style="color:#a3be8c;">created_at:</span><span> created_at)
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span><span style="color:#65737e;"># app/models/post_publish.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">PostPublish </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationRecord
+</span><span>  belongs_to </span><span style="color:#a3be8c;">:post
+</span><span>
+</span><span>  validate </span><span style="color:#a3be8c;">:already_published
+</span><span>
+</span><span>  </span><span style="color:#8fa1b3;">private
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">already_published
+</span><span>    published = </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">class</span><span>.order(</span><span style="color:#a3be8c;">created_at: :DESC</span><span>).find_by(</span><span style="color:#a3be8c;">post_id:</span><span> post_id)
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">return if</span><span> published.blank?
+</span><span>    </span><span style="color:#b48ead;">return if</span><span> published.post_publish_delete.present?
+</span><span>
+</span><span>    errors.add(</span><span style="color:#a3be8c;">:already_published</span><span>, &quot;</span><span style="color:#a3be8c;">すでにpublish済みです: </span><span>#{post_id}&quot;)
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h4 id="publishの削除イベント発生">publishの削除イベント発生<a class="zola-anchor" href="#publishの削除イベント発生" aria-label="Anchor link for: publishの削除イベント発生"><i class="fas fa-link"></i></a> 
+</h4>
+<p>publishを削除するときは、publish_deleteイベントが発生したことにする。直接post_publishをdeleteしてもよいが、イミュータブルデータモデルを採用するときはイベントをログとして残したいはずなので、削除イベントの発生として表現する。
+post_publishインスタンスからpost_publish_deleteイベントを生成する(<code>PostPublish#withdraw</code>)</p>
+<p>ここでpublishに対して削除イベントが1回しか発生しない、とする場合 <code>has_one</code> を使うことになるのだが、<code>post_publish_delete.create</code> のようにすると <code>undefined method 'create' for nil:NilClass</code> が発生する。
+代わりに<code>create_post_publish_delete</code>と書ける。ただし、すでにpost_publish_deleteが存在する場合は、新規レコードを作成して古いpost_publish_deleteを関連から外すような動きをする。これはpost_publish_deleteモデルでvalidationエラーが発生していても発生する。そのため呼び出し側(<code>PostPublish#withdraw</code>)で塞いでおく必要がある。</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># app/models/post_publish.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">PostPublish </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationRecord
+</span><span>  has_one </span><span style="color:#a3be8c;">:post_publish_delete
+</span><span>
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">withdraw
+</span><span>    </span><span style="color:#8fa1b3;">raise </span><span>&quot;</span><span style="color:#a3be8c;">すでに削除済みです: (post_publish_id: </span><span>#{id}</span><span style="color:#a3be8c;">)</span><span>&quot; </span><span style="color:#b48ead;">if</span><span> post_publish_delete.present?
+</span><span>
+</span><span>    create_post_publish_delete(</span><span style="color:#a3be8c;">post_publish_id:</span><span> id)
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span><span style="color:#65737e;"># app/models/post_publish_delete.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">PostPublishDelete </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationRecord
+</span><span>  belongs_to </span><span style="color:#a3be8c;">:post_publish
+</span><span>
+</span><span>  validate </span><span style="color:#a3be8c;">:cannot_be_updated
+</span><span>
+</span><span>  </span><span style="color:#8fa1b3;">private
+</span><span>
+</span><span>  </span><span style="color:#65737e;"># post_publish.create_publish_deleteの場合このバリデーションでエラーになっても、DBへのinsertは発生する(結局unique制約で例外になる)
+</span><span>  </span><span style="color:#65737e;"># このvalidationは直接PostPublishDelete.createされた場合の対策
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">cannot_be_updated
+</span><span>    </span><span style="color:#b48ead;">return unless </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#96b5b4;">class</span><span>.find_by(</span><span style="color:#a3be8c;">post_publish_id:</span><span> post_publish_id)
+</span><span>
+</span><span>    errors.add(</span><span style="color:#a3be8c;">:already_deleted</span><span>, &quot;</span><span style="color:#a3be8c;">すでに削除済みです(post_publish_id: </span><span>#{post_publish_id}</span><span style="color:#a3be8c;">)</span><span>&quot;)
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h3 id="spec">spec<a class="zola-anchor" href="#spec" aria-label="Anchor link for: spec"><i class="fas fa-link"></i></a> 
+</h3>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># spec/models/post_spec.rb
+</span><span style="color:#8fa1b3;">require </span><span>&#39;</span><span style="color:#a3be8c;">rails_helper</span><span>&#39;
+</span><span>
+</span><span>describe </span><span style="color:#bf616a;">Post</span><span>, </span><span style="color:#a3be8c;">type: :model </span><span style="color:#b48ead;">do
+</span><span>
+</span><span>  describe &#39;</span><span style="color:#a3be8c;">.with_latest_publish</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>    subject { described_class.with_latest_publish }
+</span><span>
+</span><span>    let(</span><span style="color:#a3be8c;">:post</span><span>) { </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>) }
+</span><span>    let!(</span><span style="color:#a3be8c;">:only_publish</span><span>) { post.publish_at! }
+</span><span>
+</span><span>    let(</span><span style="color:#a3be8c;">:post2</span><span>) { </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>) }
+</span><span>    let!(</span><span style="color:#a3be8c;">:multiple_publishes</span><span>) </span><span style="color:#b48ead;">do
+</span><span>      post2.publish_at!(</span><span style="color:#ebcb8b;">Date</span><span>.yesterday, </span><span style="color:#d08770;">30</span><span>.minutes.ago).withdraw
+</span><span>      post2.publish_at!
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    let!(</span><span style="color:#a3be8c;">:post3</span><span>) { </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>) }
+</span><span>
+</span><span>    it </span><span style="color:#b48ead;">do
+</span><span>      expect(subject).to contain_exactly(post, post2, post3)
+</span><span>      expect(subject.map(&amp;</span><span style="color:#a3be8c;">:post_publishes</span><span>).</span><span style="color:#96b5b4;">to_a</span><span>.flatten).to contain_exactly(only_publish, multiple_publishes)
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>  describe &#39;</span><span style="color:#a3be8c;">#published?</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>    subject { post.published? }
+</span><span>
+</span><span>    let(</span><span style="color:#a3be8c;">:post</span><span>) { </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>) }
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">一度もpublishされてない場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      it { is_expected.to be </span><span style="color:#d08770;">false </span><span>}
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">最後のpublishがdeleteされている場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      before </span><span style="color:#b48ead;">do
+</span><span>        post.publish_at!.withdraw
+</span><span>        post.publish_at!.withdraw
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>      it { is_expected.to be </span><span style="color:#d08770;">false </span><span>}
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">最後のpublishがdeleteされていない場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      before </span><span style="color:#b48ead;">do
+</span><span>        post.publish_at!.withdraw
+</span><span>        post.publish_at!
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>      it { is_expected.to be </span><span style="color:#d08770;">true </span><span>}
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>  describe &#39;</span><span style="color:#a3be8c;">#publish_at!</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>    subject { post.publish_at! }
+</span><span>    let(</span><span style="color:#a3be8c;">:post</span><span>) { </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>) }
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">一度もpublishしていない場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      it </span><span style="color:#b48ead;">do
+</span><span>        expect { subject }.to change(</span><span style="color:#bf616a;">PostPublish</span><span>, </span><span style="color:#a3be8c;">:count</span><span>).by(</span><span style="color:#d08770;">1</span><span>)
+</span><span>        expect(subject).to be_a(</span><span style="color:#bf616a;">PostPublish</span><span>).and be_persisted
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">最後のpublishがdeleteされている場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      before </span><span style="color:#b48ead;">do
+</span><span>        post.publish_at!.withdraw
+</span><span>        post.publish_at!.withdraw
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>      it </span><span style="color:#b48ead;">do
+</span><span>        expect { subject }.to change(</span><span style="color:#bf616a;">PostPublish</span><span>, </span><span style="color:#a3be8c;">:count</span><span>).by(</span><span style="color:#d08770;">1</span><span>)
+</span><span>        expect(subject).to be_a(</span><span style="color:#bf616a;">PostPublish</span><span>).and be_persisted
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">最後のpublishがdeleteされていない場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      before </span><span style="color:#b48ead;">do
+</span><span>        post.publish_at!.withdraw
+</span><span>        post.publish_at!
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>      it </span><span style="color:#b48ead;">do
+</span><span>        expect { subject }.to raise_error(</span><span style="color:#ebcb8b;">ActiveRecord</span><span>::RecordInvalid, &quot;</span><span style="color:#a3be8c;">Validation failed: Already published すでにpublish済みです: </span><span>#{post.id}&quot;)
+</span><span>                                .and change(</span><span style="color:#bf616a;">PostPublish</span><span>, </span><span style="color:#a3be8c;">:count</span><span>).by(</span><span style="color:#d08770;">0</span><span>)
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span><span style="color:#65737e;"># spec/models/post_publish_spec.rb
+</span><span style="color:#8fa1b3;">require </span><span>&#39;</span><span style="color:#a3be8c;">rails_helper</span><span>&#39;
+</span><span>
+</span><span>describe </span><span style="color:#bf616a;">PostPublish</span><span>, </span><span style="color:#a3be8c;">type: :model </span><span style="color:#b48ead;">do
+</span><span>  describe &#39;</span><span style="color:#a3be8c;">#withdraw</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>    subject { post_publish.withdraw }
+</span><span>    let(</span><span style="color:#a3be8c;">:post_publish</span><span>) </span><span style="color:#b48ead;">do
+</span><span>      post = </span><span style="color:#ebcb8b;">FactoryBot</span><span>.create(</span><span style="color:#a3be8c;">:post</span><span>)
+</span><span>      post.publish_at!
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">すでに削除済みの場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      before { post_publish.withdraw }
+</span><span>
+</span><span>      it </span><span style="color:#b48ead;">do
+</span><span>        expect { subject }.to raise_error(</span><span style="color:#bf616a;">RuntimeError</span><span>, &quot;</span><span style="color:#a3be8c;">すでに削除済みです: (post_publish_id: </span><span>#{post_publish.id}</span><span style="color:#a3be8c;">)</span><span>&quot;)
+</span><span>                                .and change(</span><span style="color:#bf616a;">PostPublishDelete</span><span>, </span><span style="color:#a3be8c;">:count</span><span>).by(</span><span style="color:#d08770;">0</span><span>)
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>
+</span><span>    context &#39;</span><span style="color:#a3be8c;">まだ削除済みでない場合</span><span>&#39; </span><span style="color:#b48ead;">do
+</span><span>      it </span><span style="color:#b48ead;">do
+</span><span>        expect { subject }.to change(</span><span style="color:#bf616a;">PostPublishDelete</span><span>, </span><span style="color:#a3be8c;">:count</span><span>).by(</span><span style="color:#d08770;">1</span><span>)
+</span><span>        expect(subject).to be_a(</span><span style="color:#bf616a;">PostPublishDelete</span><span>).and be_persisted
+</span><span>      </span><span style="color:#b48ead;">end
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span></code></pre>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/ruby-on-rails/">Ruby on Rails</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

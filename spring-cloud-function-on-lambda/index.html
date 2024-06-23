@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>spring cloud function on AWS Lambda | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="spring cloud function on AWS Lambda | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="spring cloud function on AWS Lambda | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>spring cloud function on AWS Lambda</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2022-02-27">
+                    2022-02-27
+                </time>
+                
+                 - (6 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/spring-cloud-function-on-lambda/#やること" class="toc-link">
+    やること
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/spring-cloud-function-on-lambda/#簡単に始める" class="toc-link">
+    簡単に始める
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/spring-cloud-function-on-lambda/#AWS_lambdaにデプロイする" class="toc-link">
+    AWS lambdaにデプロイする
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/spring-cloud-function-on-lambda/#コンテナ実行" class="toc-link">
+    コンテナ実行
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/spring-cloud-function-on-lambda/#deploy" class="toc-link">
+    deploy
+</a>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="やること">やること<a class="zola-anchor" href="#やること" aria-label="Anchor link for: やること"><i class="fas fa-link"></i></a> 
+</h2>
+<p>kotlinでspring cloud functionをつかったバッチ処理を実装してAWS lambdaにデプロイする。コンテナ環境で実行できるようにする。</p>
+<h2 id="簡単に始める">簡単に始める<a class="zola-anchor" href="#簡単に始める" aria-label="Anchor link for: 簡単に始める"><i class="fas fa-link"></i></a> 
+</h2>
+<p>ドキュメントは<a href="https://docs.spring.io/spring-cloud-function/docs/3.2.1/reference/html/spring-cloud-function.html">こちら</a></p>
+<p>依存を入れる。(gradleを使っているとする)</p>
+<pre data-lang="kotlin" style="background-color:#2b303b;color:#c0c5ce;" class="language-kotlin "><code class="language-kotlin" data-lang="kotlin"><span style="color:#65737e;">// build.gradle.kts
+</span><span>dependencies {
+</span><span>  implementation(&quot;</span><span style="color:#a3be8c;">org.springframework.cloud:spring-cloud-function-context</span><span>&quot;)
+</span><span>  implementation(&quot;</span><span style="color:#a3be8c;">org.springframework.cloud:spring-cloud-starter-function-web</span><span>&quot;)
+</span><span>}
+</span></code></pre>
+<p>関数を実装する。kotlinを使う場合はlambdaを使って実装するのが手軽。
+lambdaを返すメソッドを定義してあげれば良い。返り値のlambdaのsignatureが関数のsignatureと一致することに注意。</p>
+<pre data-lang="kotlin" style="background-color:#2b303b;color:#c0c5ce;" class="language-kotlin "><code class="language-kotlin" data-lang="kotlin"><span style="color:#b48ead;">package </span><span>com.project.my
+</span><span>
+</span><span>@SpringBootApplication
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Samplelication</span><span>(
+</span><span>// 必要に応じて@Autowiredする
+</span><span>) {
+</span><span>
+</span><span>    @Bean
+</span><span>    </span><span style="color:#b48ead;">fun </span><span style="color:#8fa1b3;">test</span><span>(): () -&gt; </span><span style="color:#b48ead;">String</span><span> {
+</span><span>        </span><span style="color:#b48ead;">return</span><span> { &quot;</span><span style="color:#a3be8c;">test</span><span>&quot; }
+</span><span>    }
+</span><span>
+</span><span>    @Bean
+</span><span>    </span><span style="color:#b48ead;">fun </span><span style="color:#8fa1b3;">uppercase</span><span>(): (</span><span style="color:#b48ead;">String</span><span>) -&gt; </span><span style="color:#b48ead;">String</span><span> {
+</span><span>        </span><span style="color:#b48ead;">return</span><span> { it.uppercase() }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>gradleでプロジェクトを作っている場合は
+<code>gradle bootRun</code>を実行するとwebサーバーが立ち上がるので、
+<code>curl -H &quot;Content-Type: text/plain&quot; localhost:8080/test</code> や <code>curl -H &quot;Content-Type: text/plain&quot; localhost:8080/upercase -d Hello</code> のようにしてあげるとそれぞれの関数をローカルで実行できる。</p>
+<p>もっと複雑な引数はjson形式で渡すことができる(jsonをマッピングさせるkotlinのdataクラスを作りlambdaの引数や返り値に設定する)</p>
+<h2 id="AWS_lambdaにデプロイする">AWS lambdaにデプロイする<a class="zola-anchor" href="#AWS_lambdaにデプロイする" aria-label="Anchor link for: AWS_lambdaにデプロイする"><i class="fas fa-link"></i></a> 
+</h2>
+<p>ドキュメントは<a href="https://docs.spring.io/spring-cloud-function/docs/3.2.1/reference/html/aws.html">こちら</a></p>
+<ul>
+<li>ドキュメントで指定されたpluginを入れてjarファイルを作りaws lambdaにアップロード</li>
+<li>環境変数<code>MAIN_CLASS</code> に<code>com.project.my::SmapleApplication</code>と入れる</li>
+<li>Handlerには <code>org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest</code> を指定する</li>
+<li>関数が複数ある場合は環境変数(<code>SPRING_CLOUD_FUNCTION_DEFINITION</code>)に実装したメソッド名を指定すると関数を指定できる。</li>
+</ul>
+<h2 id="コンテナ実行">コンテナ実行<a class="zola-anchor" href="#コンテナ実行" aria-label="Anchor link for: コンテナ実行"><i class="fas fa-link"></i></a> 
+</h2>
+<p>せっかくなのでコンテナ上で実行したい。コンテナは<a href="https://hub.docker.com/r/amazon/aws-lambda-java">aws-lambda-java</a>を使う。</p>
+<pre data-lang="Dockerfile" style="background-color:#2b303b;color:#c0c5ce;" class="language-Dockerfile "><code class="language-Dockerfile" data-lang="Dockerfile"><span style="color:#65737e;"># lambda/Dockerfile
+</span><span>
+</span><span style="color:#b48ead;">FROM</span><span> public.ecr.aws/lambda/java:11
+</span><span>
+</span><span style="color:#b48ead;">ENV </span><span>MAIN_CLASS=com.project.my.SmapleApplication
+</span><span>
+</span><span style="color:#b48ead;">COPY</span><span> my-0.0.1-SNAPSHOT-aws.jar ${LAMBDA_TASK_ROOT}
+</span><span style="color:#65737e;"># awsのjava用コンテナは実行に必要なクラスファイルを所定の場所に設置することを要求する
+</span><span style="color:#b48ead;">RUN </span><span>jar -xf my-0.0.1-SNAPSHOT-aws.jar
+</span><span>
+</span><span style="color:#65737e;"># aws lambda javaコンテナではhandlerをCMDに指定することになっている
+</span><span>CMD [&quot;</span><span style="color:#a3be8c;">org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest</span><span>&quot;]
+</span></code></pre>
+<p>基本的にはaws-lambda-javaの説明通りなのだが、MAIN_CLASSを環境変数内で指定しておくとawsコンソール上での設定を省けて楽。<code>SPLING_CLOUD_FUNCTION_DEFINITION</code> を指定もできるが、そうするとこのコンテナが特定の関数専用になってしまうので、deploy時にlambdaの方に指定してあげるのが良いと思う。</p>
+<p>手元で実行するときは以下のようにする</p>
+<ol>
+<li>shadowJarファイルを生成しておく</li>
+</ol>
+<ul>
+<li><code>gradle shadowJar</code></li>
+</ul>
+<ol start="2">
+<li>buildする</li>
+</ol>
+<ul>
+<li><code>docker build ./lambda -t sample-application/lambda</code></li>
+</ul>
+<ol start="3">
+<li>起動する</li>
+</ol>
+<ul>
+<li><code>docker run --env SPRING_CLOUD_FUNCTION_DEFINITION=uppercase -p 9000:8080 sample-application/lambda</code>
+<ul>
+<li>起動時に環境変数として<code>SPRING_CLOUD_FUNCTION_DEFINITIOIN=関数名</code>とすることで実行対象の関数を指定できる。staging環境にしたり、IAMユーザーの情報も起動時に環境変数から渡せる</li>
+</ul>
+</li>
+</ul>
+<ol start="4">
+<li>関数を実行する(コンテナイメージにはAWS Lambda Runtime Interface Clients が含まれている)</li>
+</ol>
+<ul>
+<li><code>curl  -XPOST &quot;http://localhost:9000/2015-03-31/functions/function/invocations&quot; -d '&quot;fOo&quot;'</code>
+<ul>
+<li>3で指定した関数が実行される。違う関数を試したい場合は3にわたす環境変数名を変える。引数を取らない関数でも空の引数を渡してあげる必要がある。
+<ul>
+<li><code>curl  -XPOST &quot;http://localhost:9000/2015-03-31/functions/function/invocations&quot; -d {}</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="deploy">deploy<a class="zola-anchor" href="#deploy" aria-label="Anchor link for: deploy"><i class="fas fa-link"></i></a> 
+</h2>
+<p>蛇足だが、CicleCIでdeployするときの一部設定</p>
+<pre data-lang="YAML" style="background-color:#2b303b;color:#c0c5ce;" class="language-YAML "><code class="language-YAML" data-lang="YAML"><span style="color:#bf616a;">jobs</span><span>:
+</span><span>  </span><span style="color:#bf616a;">build</span><span>:
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      </span><span style="color:#65737e;"># generate shadowJar
+</span><span>      - </span><span style="color:#bf616a;">run</span><span>: </span><span style="color:#a3be8c;">gradle shadowJar
+</span><span>      - </span><span style="color:#bf616a;">persist_to_workspace</span><span>:
+</span><span>          </span><span style="color:#bf616a;">root</span><span>: </span><span style="color:#a3be8c;">lambda
+</span><span>          </span><span style="color:#bf616a;">paths</span><span>:
+</span><span>            - </span><span style="color:#a3be8c;">my-0.0.1-SNAPSHOT-aws.jar
+</span><span>            - </span><span style="color:#a3be8c;">Dockerfile
+</span><span>    </span><span style="color:#bf616a;">build-and-push-image</span><span>:
+</span><span>    </span><span style="color:#bf616a;">parameters</span><span>:
+</span><span>      </span><span style="color:#bf616a;">aws_access_key_id</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">aws_secret_access_key</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">region</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">aws_ecr_account_url</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">repository_name</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">string
+</span><span>      </span><span style="color:#bf616a;">secret_name_msk</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">string
+</span><span>    </span><span style="color:#bf616a;">executor</span><span>: </span><span style="color:#a3be8c;">aws-ecr/default
+</span><span>    </span><span style="color:#bf616a;">working_directory</span><span>: </span><span style="color:#a3be8c;">~/repo
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">attach_workspace</span><span>:
+</span><span>          </span><span style="color:#bf616a;">at</span><span>: </span><span style="color:#a3be8c;">~/repo/lambda
+</span><span>      - </span><span style="color:#bf616a;">aws-cli/setup</span><span>:
+</span><span>          </span><span style="color:#bf616a;">aws-access-key-id</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_access_key_id&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">aws-region</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.region&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">aws-secret-access-key</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_secret_access_key&gt;&gt;
+</span><span>      - </span><span style="color:#bf616a;">aws-ecr/build-and-push-image</span><span>:
+</span><span>          </span><span style="color:#bf616a;">checkout</span><span>: </span><span style="color:#d08770;">false
+</span><span>          </span><span style="color:#bf616a;">account-url</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_ecr_account_url&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">repo</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.repository_name&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">region</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.region&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">tag</span><span>: &quot;</span><span style="color:#a3be8c;">${CIRCLE_SHA1}</span><span>&quot;
+</span><span>          </span><span style="color:#bf616a;">aws-access-key-id</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_access_key_id&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">aws-secret-access-key</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_secret_access_key&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">path</span><span>: </span><span style="color:#a3be8c;">~/repo/lambda
+</span><span>  </span><span style="color:#bf616a;">update-lambda</span><span>:
+</span><span>    </span><span style="color:#bf616a;">parameters</span><span>:
+</span><span>      </span><span style="color:#bf616a;">aws_access_key_id</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">aws_secret_access_key</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">region</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">aws_ecr_account_url</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">env_var_name
+</span><span>      </span><span style="color:#bf616a;">repository_name</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">string
+</span><span>      </span><span style="color:#bf616a;">function_name</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">string
+</span><span>      </span><span style="color:#bf616a;">spring_cloud_function_definition</span><span>:
+</span><span>        </span><span style="color:#bf616a;">type</span><span>: </span><span style="color:#a3be8c;">string
+</span><span>    </span><span style="color:#bf616a;">executor</span><span>: </span><span style="color:#a3be8c;">aws-cli/default
+</span><span>    </span><span style="color:#bf616a;">steps</span><span>:
+</span><span>      - </span><span style="color:#bf616a;">aws-cli/setup</span><span>:
+</span><span>          </span><span style="color:#bf616a;">aws-access-key-id</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_access_key_id&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">aws-region</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.region&gt;&gt;
+</span><span>          </span><span style="color:#bf616a;">aws-secret-access-key</span><span>: </span><span style="color:#a3be8c;">&lt;&lt;parameters.aws_secret_access_key&gt;&gt;
+</span><span>      - </span><span style="color:#a3be8c;">jq/install
+</span><span>      - </span><span style="color:#bf616a;">run</span><span>:
+</span><span>          </span><span style="color:#bf616a;">command</span><span>: </span><span style="color:#b48ead;">|
+</span><span style="color:#a3be8c;">            aws lambda update-function-code --function-name &lt;&lt;parameters.function_name&gt;&gt; --image-uri ${&lt;&lt;parameters.aws_ecr_account_url&gt;&gt;}/&lt;&lt;parameters.repository_name&gt;&gt;:${CIRCLE_SHA1}
+</span><span style="color:#a3be8c;">            for _i in {1..5} ; do
+</span><span style="color:#a3be8c;">              if [ $(aws lambda get-function-configuration  --function-name my-sample-application | jq .LastUpdateStatus -r) = Successful ]; then
+</span><span style="color:#a3be8c;">                break
+</span><span style="color:#a3be8c;">              else
+</span><span style="color:#a3be8c;">                sleep 15
+</span><span style="color:#a3be8c;">              fi
+</span><span style="color:#a3be8c;">            done
+</span><span style="color:#a3be8c;">            aws lambda update-function-configuration --function-name &lt;&lt;parameters.function_name&gt;&gt; --environment &quot;Variables={SPRING_CLOUD_FUNCTION_DEFINITION=&lt;&lt;parameters.spring_cloud_function_definition&gt;&gt;}&quot;
+</span></code></pre>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/kotlin/">kotlin</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/spring/">spring</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/lambda/">lambda</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

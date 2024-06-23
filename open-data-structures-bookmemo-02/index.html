@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>みんなのデータ構造読書メモ 第一章(2) | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="みんなのデータ構造読書メモ 第一章(2) | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="みんなのデータ構造読書メモ 第一章(2) | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>みんなのデータ構造読書メモ 第一章(2)</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-08-19">
+                    2020-08-19
+                </time>
+                
+                 - (2 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <h3 id="1.4_計算モデル">1.4 計算モデル<a class="zola-anchor" href="#1.4_計算モデル" aria-label="Anchor link for: 1.4_計算モデル"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>ワード幅<code>w</code>と要素数<code>n</code>があるとき、<script type="math/tex">w \gt \log_2 n</script>
+を前提とする、ということは1ワードの中には最高でも1つの要素しか存在しない(<code>w</code>ビット中に複数要素が存在することはありえない)という仮定のもとでの話だと思う。このとき<script type="math/tex">n = 64</script>
+とすると、<script type="math/tex">\log_2 64 = 6</script>
+なので、6bitあれば2進数で要素数を表せる。もし<code>w</code>bitで数え切れないような要素数の場合は1ワード以上を必要とするのでそれを避けたいようだ(2ワード使って表すのになんの問題があるのかはよくわからないが)。64bitコンピューターの世界では<script type="math/tex">2^6=</script>
+約1844京個の要素しかデータ構造に存在しない。</li>
+</ul>
+<span id="continue-reading"></span>
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/algorithm/">algorithm</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/data-structure/">data structure</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

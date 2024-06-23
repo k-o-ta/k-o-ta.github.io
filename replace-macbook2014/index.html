@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>macbookのOSをUbuntu22.04にした | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="macbookのOSをUbuntu22.04にした | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="macbookのOSをUbuntu22.04にした | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>macbookのOSをUbuntu22.04にした</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2022-05-22">
+                    2022-05-22
+                </time>
+                
+                 - (5 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/replace-macbook2014/#やったこと" class="toc-link">
+    やったこと
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/replace-macbook2014/#事前準備" class="toc-link">
+    事前準備
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/replace-macbook2014/#スピーカーの交換" class="toc-link">
+    スピーカーの交換
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/replace-macbook2014/#SSDの交換" class="toc-link">
+    SSDの交換
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/replace-macbook2014/#OSをUbuntu22.04にする" class="toc-link">
+    OSをUbuntu22.04にする
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/replace-macbook2014/#感想" class="toc-link">
+    感想
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <p>プライベートでmid 2014な13インチmacbookを使ってきたが、流石に古いため新しいOSは提供されなくなり、最近はスピーカーも壊れてしまっていた。下取りに出して新しいmacbookを購入することも考えたが、あまり良い値段も付かないだろうし、半年ほど前にバッテリーは交換したばかりだったので自分でパーツを交換して使い続けることにした。</p>
+<h3 id="やったこと">やったこと<a class="zola-anchor" href="#やったこと" aria-label="Anchor link for: やったこと"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>スピーカーの交換</li>
+<li>SSDの交換</li>
+<li>OSをUbuntu22.04にする</li>
+</ul>
+<h4 id="事前準備">事前準備<a class="zola-anchor" href="#事前準備" aria-label="Anchor link for: 事前準備"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li>何かあったら困るのでmacのbackupをとっておく</li>
+<li>ubuntuのインストールUSBメディアを作成しておく
+<ul>
+<li>適当に調べれば出てくる</li>
+</ul>
+</li>
+<li>macOSのインストールUSBメディアを作成しておく
+<ul>
+<li>macOSに戻したくなったときに使う</li>
+<li>USBメディアをフォーマットした上で<a href="https://support.apple.com/ja-jp/HT201372">手順</a>に従う</li>
+</ul>
+</li>
+</ul>
+<h4 id="スピーカーの交換">スピーカーの交換<a class="zola-anchor" href="#スピーカーの交換" aria-label="Anchor link for: スピーカーの交換"><i class="fas fa-link"></i></a> 
+</h4>
+<ul>
+<li><a href="https://www.amazon.co.jp/gp/product/B07Z9233HQ">交換用スピーカー</a></li>
+<li><a href="https://www.amazon.co.jp/gp/product/B07Z9233HQ">macbookの裏蓋を開けるドライバー</a></li>
+<li><a href="https://www.amazon.co.jp/gp/product/B002SQLDS2">macbookの内部で使うドライバー</a>
+手順は<a href="https://jp.ifixit.com/Guide/MacBook+Pro+13-Inch+Retina+Display+Mid+2014%E3%81%AE%E5%8F%B3%E5%81%B4%E3%82%B9%E3%83%94%E3%83%BC%E3%82%AB%E3%83%BC%E3%81%AE%E4%BA%A4%E6%8F%9B/27848">こちら</a>を参考にした。右側スピーカーだけ変えて音のバランスが狂うのも嫌だったので、左側も換えた。右側の交換ができれば、手順は載っていないが左側は難しくないと思う。ついでに手元にCPUグリスのあまりがあったので、塗り直しておいた。<a href="https://jp.ifixit.com/Guide/MacBook+Pro+13-Inch+Retina+Display+Mid+2014+%E3%81%AE%E3%83%92%E3%83%BC%E3%83%88%E3%82%B7%E3%83%B3%E3%82%AF%E3%81%AE%E4%BA%A4%E6%8F%9B/27839">この手順</a>にしたがってヒートシンクを取り外してグリスを塗り直せば良い。</li>
+</ul>
+<p><img src="https://www.dropbox.com/s/gyd9hlumns2soz6/inside-macbook.jpg?dl=1" alt="inside-mac-book" /></p>
+<h4 id="SSDの交換">SSDの交換<a class="zola-anchor" href="#SSDの交換" aria-label="Anchor link for: SSDの交換"><i class="fas fa-link"></i></a> 
+</h4>
+<p>購入時から256GBのSSDを使い続けていたが、だいぶ古い &amp; 容量も物足りなかったので新しいものに交換した。</p>
+<ul>
+<li><a href="https://www.amazon.co.jp/gp/product/B08C2S7HTT">SSD</a></li>
+<li><a href="https://www.amazon.co.jp/gp/product/B01CWWAENG">SSDのアダプター</a>
+macbookので利用されているSSDはM.2とは型が違うのでアダプターが必要。適当にググって評判が良さそうなのを使った。
+手順は<a href="https://jp.ifixit.com/Guide/MacBook+Pro+13-Inch+Retina+Display+Mid+2014+SSD%E3%81%AE%E4%BA%A4%E6%8F%9B/27849">引き続きifixit</a>を利用した。SSDをアダプターに取り付けるときに結構硬いので破壊しないように気をつけながら力を込める必要があった。交換前に新しいSSDにデータを移しておく方法もよく見かけるが、今回はOSもUbuntuにする予定だったので、データ移行はしなかった。</li>
+</ul>
+<h3 id="OSをUbuntu22.04にする">OSをUbuntu22.04にする<a class="zola-anchor" href="#OSをUbuntu22.04にする" aria-label="Anchor link for: OSをUbuntu22.04にする"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>作っておいたUbuntuのインストールUSBメディアを挿してoptionキーを押したまま電源を入れるとBIOSが起動するので、ボリュームの選択画面でUSBメディアを選択して、Ubuntuをインストールしていく</li>
+</ul>
+<p><img src="https://www.dropbox.com/s/no6sjpp6mgw2spl/ubuntu-on-mac.jpg?dl=1" alt="ubuntu-on-mac" /></p>
+<h4 id="感想">感想<a class="zola-anchor" href="#感想" aria-label="Anchor link for: 感想"><i class="fas fa-link"></i></a> 
+</h4>
+<p>スピーカーは直ったし、新しいOSというのはそれだけで気分が良い。一点不満があるとすればバッテリーはmacOSほど長持ちしていない気がしているところ。</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/macbook/">macbook</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

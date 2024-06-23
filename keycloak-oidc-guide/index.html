@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>keycloakでOIDC認証するときに知っておくと良いこと | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="keycloakでOIDC認証するときに知っておくと良いこと | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="keycloakでOIDC認証するときに知っておくと良いこと | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>keycloakでOIDC認証するときに知っておくと良いこと</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2020-11-04">
+                    2020-11-04
+                </time>
+                
+                 - (17 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/keycloak-oidc-guide/#極めて単純なkeycloakの要素" class="toc-link">
+    極めて単純なkeycloakの要素
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#realm" class="toc-link">
+    realm
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#client" class="toc-link">
+    client
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#uesr" class="toc-link">
+    uesr
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#関連図" class="toc-link">
+    関連図
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/keycloak-oidc-guide/#単純でないkeycloakの要素" class="toc-link">
+    単純でないkeycloakの要素
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#role" class="toc-link">
+    role
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#user" class="toc-link">
+    user
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#client-1" class="toc-link">
+    client
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#client_scope" class="toc-link">
+    client scope
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#service_account" class="toc-link">
+    service account
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/keycloak-oidc-guide/#関連図-1" class="toc-link">
+    関連図
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <p>keycloakを使ってOIDC認証を導入することになり、設定画面で何を設定すべきかなどに困ったのでまとめておく。<br />
+前提</p>
+<ul>
+<li>OAuth2の基本的な理解</li>
+<li>OIDCの基本的な理解()
+<ul>
+<li>OIDC自体を知りたい場合は<a href="https://tech-lab.sios.jp/archives/8651">この説明</a>とかがわかりやすいと思う</li>
+</ul>
+</li>
+<li>keycloakのOIDCクライアントは作成済み(<a href="https://keycloak-documentation.openstandia.jp/master/ja_JP/server_admin/index.html#oidc%E3%82%AF%E3%83%A9%E3%82%A4%E3%82%A2%E3%83%B3%E3%83%88">手順</a>)</li>
+</ul>
+<h2 id="極めて単純なkeycloakの要素">極めて単純なkeycloakの要素<a class="zola-anchor" href="#極めて単純なkeycloakの要素" aria-label="Anchor link for: 極めて単純なkeycloakの要素"><i class="fas fa-link"></i></a> 
+</h2>
+<p>keycloakの設定方法が分かりづらいのは管理画面に設定する項目が大量にあるからだが、極めて単純化すると最初に知るべきなのはrealm, client, userくらいである。</p>
+<h3 id="realm">realm<a class="zola-anchor" href="#realm" aria-label="Anchor link for: realm"><i class="fas fa-link"></i></a> 
+</h3>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>レルムは、ユーザー、クレデンシャル、ロール、および、グループのセットを管理します。ユーザーは属しているレルムにログインします。レルムは互いに分離されており、制御するユーザーのみを管理して、認証することができます。</p>
+</blockquote>
+<p>となっている。言ってみればnamespace的なもので、複数アプリケーションでシングルサインオン(SSO)するときは同一のrealmにユーザーやアプリケーションを登録する</p>
+<h3 id="client">client<a class="zola-anchor" href="#client" aria-label="Anchor link for: client"><i class="fas fa-link"></i></a> 
+</h3>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>クライアントは、Keycloakにユーザーの認証を要求できるエンティティーです。多くの場合、クライアントはKeycloakを使用して自分自身を保護し、シングル・サインオン・ソリューションを提供するアプリケーションとサービスのことを指します。</p>
+</blockquote>
+<p>となっている。keyclaokを利用するアプリケーションのことで、複数アプリケーション間でSSOを実現するときはアプリケーション分clientをrealmに登録する。</p>
+<h3 id="uesr">uesr<a class="zola-anchor" href="#uesr" aria-label="Anchor link for: uesr"><i class="fas fa-link"></i></a> 
+</h3>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>システムにログイン可能なエンティティーのことです。電子メール、ユーザー名、住所、電話番号、生年月日など自分自身に関連する属性を持ちます。また、グループ・メンバーシップが割り当てられたり、特定のロールが割り当てられたりします。</p>
+</blockquote>
+<p>となっている。認証されるユーザーのこと。</p>
+<h3 id="関連図">関連図<a class="zola-anchor" href="#関連図" aria-label="Anchor link for: 関連図"><i class="fas fa-link"></i></a> 
+</h3>
+<p>単純に考えると、keycloakの役割は以下である。</p>
+<ul>
+<li>アプリケーション(<code>client</code>)に変わって<code>user</code>の認証を行う</li>
+<li><code>client</code>や認証した<code>user</code>の情報をOIDC tokenに変換してアプリケーションに提供する</li>
+</ul>
+<p>あるrealmでの要素間の関係は以下のようになる。OIDC <code>token</code>の生成元となる要素と、生成されるOIDC要素を色で分けている(OIDCはkeycloakで使えるプロトコルのひとつなので<code>&lt;&lt;protocol&gt;&gt;</code>としている。OIDC以外のプロトコル(SAMLやOAuth2)を利用するときはtokenが変わるだろう)<br />
+keycloakの要素に記載した <code>&gt; Clients</code> というのは実際にkeycloakの設定画面からアクセスしたときのパンくずを表している。</p>
+<p><img src="/content/keycloak-oidc-guide/keycloak_simple.svg" alt="simple_keycloak" /></p>
+<h2 id="単純でないkeycloakの要素">単純でないkeycloakの要素<a class="zola-anchor" href="#単純でないkeycloakの要素" aria-label="Anchor link for: 単純でないkeycloakの要素"><i class="fas fa-link"></i></a> 
+</h2>
+<p>上の項で説明したようにkeycloakは<code>realm</code>,<code>client</code>,<code>user</code>の設定をOIDCのtokenに変換するわけだが、<code>client</code>や<code>user</code>のどの情報をOIDC tokenに反映するかの設定をしたり、OIDCの仕様にない情報をtokenに埋め込めるようになっている。これらの設定がkeycloakの管理画面を難しくしている要因だろう。<br />
+なお、OIDCを通して得られる情報として<a href="https://openid-foundation-japan.github.io/openid-connect-core-1_0.ja.html#IDToken">ID token</a>,や<a href="https://openid-foundation-japan.github.io/rfc6749.ja.html#anchor8">Access token</a>,認証されたユーザーに関する情報を取得するための<a href="https://openid-foundation-japan.github.io/openid-connect-core-1_0.ja.html#UserInfo">UserInfoエンドポイント</a>がある。ただし、Access tokenはOAuth2のもので、実装方法も認可サーバーに依存している。</p>
+<h3 id="role">role<a class="zola-anchor" href="#role" aria-label="Anchor link for: role"><i class="fas fa-link"></i></a> 
+</h3>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>ロールは、ユーザーのタイプまたはカテゴリーを識別します。 Admin、user、 manager、employee はすべて、組織内に存在する典型的なロールです。アプリケーションは、ユーザーの扱いをきめ細く管理することが難しくなる場合があるため、個々のユーザーではなく、特定のロールにパーミッションを割り当てることが多いです。</p>
+</blockquote>
+<p>まずは<code>role</code>について。これはあまり難しくないが<code>user</code>に属性を付けるのに使う。OIDCがデフォルトで持つユーザー情報には<code>role</code>は存在しないので、組織情報などを付与できると便利。注意が必要なのは<code>role</code>はkeycloak内部で権限情報として利用されることもあるということ。(特にdefaultで用意されている<code>role</code>)にはそれらの権限が付与されており、keycloakのRest apiを使うときなどに<code>role</code>の有無によって実行できる操作が変わってくる。<br />
+また、<code>realm</code>単位と<code>client</code>単位の<code>role</code>が存在する。</p>
+<h4 id="realm_role">realm role<a class="zola-anchor" href="#realm_role" aria-label="Anchor link for: realm_role"><i class="fas fa-link"></i></a> 
+</h4>
+<p><code>realm</code>全体で使えるrole(<a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%83%AC%E3%83%AB%E3%83%A0%E3%83%AD%E3%83%BC%E3%83%AB">ドキュメント</a>)</p>
+<h4 id="client_role">client role<a class="zola-anchor" href="#client_role" aria-label="Anchor link for: client_role"><i class="fas fa-link"></i></a> 
+</h4>
+<p><code>client</code>単位で使えるrole(<a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%AF%E3%83%A9%E3%82%A4%E3%82%A2%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB">ドキュメント</a>)<br />
+設定箇所が<code>client</code>からなことに注意</p>
+<h3 id="user">user<a class="zola-anchor" href="#user" aria-label="Anchor link for: user"><i class="fas fa-link"></i></a> 
+</h3>
+<p>前述の通りだが、<code>user</code>と<code>role</code>を結びつけるための設定が必要</p>
+<h4 id="user_role_mapping">user role mapping<a class="zola-anchor" href="#user_role_mapping" aria-label="Anchor link for: user_role_mapping"><i class="fas fa-link"></i></a> 
+</h4>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>ユーザー・ロール・マッピングは、ロールとユーザーの間のマッピングを定義します。ユーザーには、0以上のロールを関連付けることができます。このロールマッピング情報を、トークンとアサーションにカプセル化して、アプリケーション(client)が管理するさまざまなリソースに対するアクセス許可を決定できるようにします。</p>
+</blockquote>
+<p><code>user</code>と<code>role</code>を結びつける設定。注意が必要なのが、デフォルトだと<code>user</code>に結びつけた<code>role</code>情報はすべて<code>token</code>内に表示されることである。<code>role</code>の説明で記載したが、<code>role</code>はkeycloak内部で権限情報として利用されることもあるので不正に<code>token</code>を取得されたときに悪用される可能性がある。それを防ぐための仕組みが<code>client</code>に対して設定できる<code>role scope mapping</code>である</p>
+<h3 id="client-1">client<a class="zola-anchor" href="#client-1" aria-label="Anchor link for: client-1"><i class="fas fa-link"></i></a> 
+</h3>
+<p>前述の通りだが、keycloak内のどの情報を<code>token</code>に含めるかの設定を行うmappingの設定を<code>role scope mapping</code>と<code>protocol mapper</code>で行っている。</p>
+<h4 id="role_scope_mapping">role scope mapping<a class="zola-anchor" href="#role_scope_mapping" aria-label="Anchor link for: role_scope_mapping"><i class="fas fa-link"></i></a> 
+</h4>
+<p><code>user</code>に対して設定した<code>role</code>を<code>token</code>に含めるかどうかの設定ができる(<a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#_role_scope_mappings">ドキュメント</a>)</p>
+<h4 id="protocol_mapper">protocol mapper<a class="zola-anchor" href="#protocol_mapper" aria-label="Anchor link for: protocol_mapper"><i class="fas fa-link"></i></a> 
+</h4>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>各クライアントに対して、どのクレームおよびアサーションをOIDCトークンまたはSAMLアサーションに格納するかを調整できます。クライアントごとに、プロトコル・マッパーを構成します。</p>
+</blockquote>
+<p>クレームとはOIDCの<code>token</code>を構成する要素(<code>token</code>はクレームの集合)<br />
+<code>role scope mapping</code>は<code>role</code>情報を<code>token</code>に含めるかどうかを設定しているが、それ以外の<code>token</code>に乗るべきすべての情報は<code>protocol mapper</code>で設定されている。keycloak内部でprotocolといったときはOIDC,OAtuh2,SAMLといった認証/認可プロトコルのことを意味していると思ってよい。</p>
+<h3 id="client_scope">client scope<a class="zola-anchor" href="#client_scope" aria-label="Anchor link for: client_scope"><i class="fas fa-link"></i></a> 
+</h3>
+<p>前述の通り<code>token</code>にどのような項目を乗せるかはclientが設定しているが、clientが複数ある場合何度も同じ設定を繰り返すのは面倒(OIDCの<code>token</code>などは仕様でも決まっているのでわざわざ自分で設定したくない)<br />
+そのため複数clientで使い回せるmappingの設定をする仕組みが<code>client scope</code>である。
+<a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>クライアントが登録されたら、そのクライアントのプロトコル・マッパーとロールスコープのマッピングを定義する必要があります。いくつかの共通の設定を共有することで、新しいクライアントの作成を容易にするために、クライアント・スコープを保存すると便利なことがよくあります。これは、 scope パラメーターの値に基づいて条件付きでクレームやロールを要求する場合にも便利です。Keycloakは、このためにクライアント・スコープの概念を提供します。</p>
+</blockquote>
+<p>設定画面ではトップレベルに用意されている<code>Client Scopes</code>と<code>Clients</code>配下に用意されている<code>Client Scopes</code>があるので注意。前者が<code>client scope</code>の定義で後者が<code>client</code>と<code>client scope</code>を結びつけるためのもの</p>
+<h3 id="service_account">service account<a class="zola-anchor" href="#service_account" aria-label="Anchor link for: service_account"><i class="fas fa-link"></i></a> 
+</h3>
+<p>最後に<code>service account</code>について説明しておく。keycloakで単に認証だけ行い、rest apiなどを設定しない場合はこの設定は不要なので読み飛ばして構わない。</p>
+<p><a href="https://keycloak-documentation.openstandia.jp/11.0.0/ja_JP/server_admin/index.html#%E3%82%B3%E3%82%A2%E3%82%B3%E3%83%B3%E3%82%BB%E3%83%97%E3%83%88%E3%81%A8%E7%94%A8%E8%AA%9E">用語集</a>の記述を抜粋すると</p>
+<blockquote>
+<p>各クライアントには、アクセストークンを取得するための組み込みサービス・アカウントがあります。</p>
+</blockquote>
+<p>となっているが、これだけ読んでもよくわからないと思う。
+まずkeycloakのREST APIを利用するには事前にトークンを取得する必要がある。このトークンは<code>access token</code>とよばれOAuth2のそれと同一である。この<code>access token</code>を取得する方法は2つある(<a href="https://keycloak-documentation.openstandia.jp/master/ja_JP/server_development/index.html#%E7%AE%A1%E7%90%86rest-api">参照</a>)</p>
+<ol>
+<li>master <code>realm</code>のユーザー名とパスワード名で<code>access token</code>取得のためのAPIを叩く</li>
+<li><code>service account</code> を利用して<code>access token</code>取得のためのAPIを叩く</li>
+</ol>
+<p>1のmaster <code>realm</code>のユーザーとパスワードを利用する方法は単純ではあるが、master <code>realm</code>にREST API用の<code>user</code>アカウントを作る(もしくは既に存在する強い権限をもつ<code>user</code>アカウントを使う)必要があるためユーザー名、パスワードの管理を含めて煩雑である。<br />
+2の<code>service account</code>を利用すると1の不便を解消できる。<code>service account</code>はOIDCのCode Grant Flowを利用する<code>client</code>にだけ生成される内部的な<code>user</code>である。対象の<code>client</code>のcredentialコードを利用するだけでtoken取得のためのAPIを叩くことができる。そのためmaster <code>realm</code>に設定を追加する必要がない。また、<code>service account</code>を利用したときに得られる<code>access token</code>の権限は<code>client</code>の<code>Service Account Role</code>という箇所から設定できる。ここら辺keycloak自身もOIDCやOAuth2の仕組みを上手く利用しているのだなと感じる。</p>
+<h3 id="関連図-1">関連図<a class="zola-anchor" href="#関連図-1" aria-label="Anchor link for: 関連図-1"><i class="fas fa-link"></i></a> 
+</h3>
+<p>上述した要素たちを関連図に付け加えると以下のようになる</p>
+<p><img src="/content/keycloak-oidc-guide/keycloak.svg" alt="keycloak" />
+元々書いてあった<code>client</code>,<code>user</code>以外に<code>token</code>の元情報になる<code>role</code>とそれらから派生した要素(<code>realm role</code>, <code>client role</code>, <code>service account</code>)は色をまとめてある。それ以外はkeycloak内部の情報を<code>token</code>に反映するときのマッピングや制限であることがわかるだろう。引き続き各要素には管理画面のどこから設定できるかを記載してある。</p>
+<p>keycloakの難しさは</p>
+<ul>
+<li>設定項目の名前から具体的に何が設定されるかがわかりにくいところ</li>
+<li>設定箇所の多さと、それ故に管理画面内のどこで何が設定されるのかがわかりにくいこと</li>
+</ul>
+<p>だが、それぞれ</p>
+<ul>
+<li>設定項目の名前から具体的に何が設定されるかがわかりにくいところ
+<ul>
+<li>本記事の説明を参照しつつkeycloak独自の要素とprotocol側の要素の名称をきちんと区別し、用語の意味を理解する</li>
+</ul>
+</li>
+<li>設定箇所の多さと、それ故に管理画面内のどこで何が設定されるのかがわかりにくいこと
+<ul>
+<li>関連図を参考に設定する箇所を探す</li>
+</ul>
+</li>
+</ul>
+<p>ことで少しでもkeycloak導入の手助けになれば嬉しい</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/oidc/">OIDC</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/keycloak/">keycloak</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

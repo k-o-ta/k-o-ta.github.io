@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>自作ブラウザを作る(2022-03-19更新) | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="自作ブラウザを作る(2022-03-19更新) | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="自作ブラウザを作る(2022-03-19更新) | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>自作ブラウザを作る(2022-03-19更新)</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2022-03-19">
+                    2022-03-19
+                </time>
+                
+                 - (4 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/develop-my-little-browser/#環境構築" class="toc-link">
+    環境構築
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/develop-my-little-browser/#window" class="toc-link">
+    window
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/develop-my-little-browser/#signal" class="toc-link">
+    signal
+</a>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <p>自作ブラウザを作ってみたいので試した記録をここに残していく</p>
+<p><a href="https://github.com/k-o-ta/femto-re">repository</a></p>
+<h3 id="環境構築">環境構築<a class="zola-anchor" href="#環境構築" aria-label="Anchor link for: 環境構築"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>言語: C++
+<ul>
+<li>普段趣味の開発ではRustを使っているが、C++を使ってみればRustの嬉しさ、辛さがもっとよくわかりそう</li>
+<li>世で一般的に使われているブラウザのはC++で動いている。開発に困ったときに実物のコードを見て参考にするなら言語が同じほうがちょっとうれしいかもしれない</li>
+</ul>
+</li>
+<li>GUI: GTK+
+<ul>
+<li>あまり理由はないが、クロスプラットフォームで動くのと好きなブラウザ(firefox)で採用されているので
+<ul>
+<li>とは言え、最初はubuntuだけで動けば良い</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>build方法
+<ul>
+<li>CMakeを使う
+<ul>
+<li>C++の開発環境としてCLionを利用したい。CLionが標準的にサポートしているのがCmake</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>まず開発を始められるのが重要なのでそこまで色々考慮せずに始める。困ったら作り直せば良い。</p>
+<h3 id="window">window<a class="zola-anchor" href="#window" aria-label="Anchor link for: window"><i class="fas fa-link"></i></a> 
+</h3>
+<p>どこから作り始めようか考えたときに、偶然<a href="https://rebuild.fm/324/">Rebuild.fm</a>を聴いていたらruiさんの話で<a href="https://serenityos.org/">SerenityOS</a>という自作OSの作者が「どこから始めても良いがGUIが好きだからGUIから始めた。作りたいものがmockでも動き始めればそれを本物にしたくなるから興味が続く」といった内容のものがあった。自分に当てはめて考えるとやはりまずはwindowが立ち上がって何かしら表示されるのを見たいので、windowを作るところから始めた。</p>
+<p>C++でGTK+を使うには<a href="http://www.gtkmm.org/en/">gtkmm</a>を使う。また、文字列を表示させるのも簡単なことならGTK+でできるが、より高度なtextのレンダリングを可能にする<a href="https://docs.gtk.org/Pango/">Pango</a>を使うことにした。Firefoxでも採用されていたらしい</p>
+<pre data-lang="CMakeLists" style="background-color:#2b303b;color:#c0c5ce;" class="language-CMakeLists "><code class="language-CMakeLists" data-lang="CMakeLists"><span># CMakeLists
+</span><span>
+</span><span>cmake_minimum_required(VERSION 3.20)
+</span><span>project(femto_re)
+</span><span>
+</span><span>set(CMAKE_CXX_STANDARD 20)
+</span><span>
+</span><span># external modules
+</span><span>find_package(PkgConfig REQUIRED)
+</span><span>PKG_CHECK_MODULES(GTKMM3 REQUIRED gtkmm-3.0)
+</span><span>PKG_CHECK_MODULES(PANGOMM REQUIRED pangomm-1.4)
+</span><span>
+</span><span>INCLUDE_DIRECTORIES(${GTKMM3_INCLUDE_DIRS})
+</span><span>LINK_DIRECTORIES(${GTKMM3_LIBRARY_DIRS})
+</span><span>ADD_DEFINITIONS(${GTKMM3_CFLAGS_OTHER})
+</span><span>
+</span><span>INCLUDE_DIRECTORIES(${PANGOMM_INCLUDE_DIRS})
+</span><span>LINK_DIRECTORIES(${PANGOMM_LIBRARY_DIRS})
+</span><span>ADD_DEFINITIONS(${PANGOMM_CFLAGS_OTHER})
+</span><span>
+</span><span>add_executable(femto_re femto-re.cpp)
+</span><span>TARGET_LINK_LIBRARIES(femto_re ${GTKMM3_LIBRARIES})
+</span></code></pre>
+<p>gtkmmでpangoを使ってtextをレンダリングする方法は<a href="https://developer-old.gnome.org/gtkmm-tutorial/3.24/sec-drawing-text.html.en">document</a>に載っているが、一点気をつけることは描画内容を変更するときは<code>Gtk::DrawingArea</code>を継承したクラスの<code>on_draw</code>メソッド内で行うようにすることだ。この先「parseが完了した後に描画する」みたいなことをするが、parse完了を<a href="https://developer-old.gnome.org/gtkmm-tutorial/3.24/chapter-signals.html.en">signal</a>で送信して受信した<code>DrawingArea</code>がそれを描画、のようにする場合signalを受信したcallbackでは直接描画内容を変更せずに<a href="https://developer-old.gnome.org/gtkmm/stable/classGtk_1_1Widget.html#a63912f0924724c78298882b7c85139b4">queue_draw()</a>呼び出すようにする。そして次の<code>on_draw</code>メソッドの実行時に描画内容を変更すれば良い</p>
+<h3 id="signal">signal<a class="zola-anchor" href="#signal" aria-label="Anchor link for: signal"><i class="fas fa-link"></i></a> 
+</h3>
+<p>editing...</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/browser/">browser</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/zi-zuo-burauza/">自作ブラウザ</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

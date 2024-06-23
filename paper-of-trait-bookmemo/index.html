@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>Schärli(シェルリ)のtraitに関する論文を読んでRustのtraitと比べた | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="Schärli(シェルリ)のtraitに関する論文を読んでRustのtraitと比べた | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="Schärli(シェルリ)のtraitに関する論文を読んでRustのtraitと比べた | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>Schärli(シェルリ)のtraitに関する論文を読んでRustのtraitと比べた</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2016-06-22">
+                    2016-06-22
+                </time>
+                
+                 - (5 min read)
+            </div>
+        </div>
+    </header>
+    
+    <section id="js-article" class="p-article__body">
+        
+    <p>Rustの特徴の一つとしてtraitがあるが、traitを考案した論文があると聞いたので読んでみた。<br />
+<a href="http://www.ptidej.net/courses/ift6251/fall06/presentations/061122/061122.doc.pdf">Nathanael Schärliらの論文</a>は25ページくらいの論文で英語だが平易な文体なので読むには苦労しないと思う。</p>
+<h2 id="出自">出自<a class="zola-anchor" href="#出自" aria-label="Anchor link for: 出自"><i class="fas fa-link"></i></a> 
+</h2>
+<p>2003年にECOOP( European Conference on Object-Oriented Programming )にて、刊行されたNathanael Schärli(シェルリ)らによる論文に記載されており、継承に代わるコードのコンポーネント化や再利用の手法として紹介されている。</p>
+<h2 id="継承の問題点">継承の問題点<a class="zola-anchor" href="#継承の問題点" aria-label="Anchor link for: 継承の問題点"><i class="fas fa-link"></i></a> 
+</h2>
+<p>継承を実現する方法として一般的であるClassの役割は以下の2つである</p>
+<ol>
+<li>instance generator(インスタンスの生成)</li>
+</ol>
+<ul>
+<li>Classはそれ自身で完結している方が良い(Classが大きくなる圧がかかる)</li>
+</ul>
+<ol start="2">
+<li>reuse of code(コードの再利用)</li>
+</ol>
+<ul>
+<li>Classはできるだけ小さい方が良い
+1と2の役割が競合することが多い<br />
+また、1の役割としては各クラスがClassのヒエラルキーにおいてそれぞれ決まった場所に配置されていることが期待されるが、2のコードの再利用の単位としてはヒエラルキーを問わずのあらゆる場所で使われることが期待される。このように、コードのコンポーネントの単位として一貫性を保ちにくい。</li>
+</ul>
+<h3 id="単一継承の問題点">単一継承の問題点<a class="zola-anchor" href="#単一継承の問題点" aria-label="Anchor link for: 単一継承の問題点"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>2つの特性を持ったClassを表現しづらい</li>
+</ul>
+<h3 id="多重継承の問題点">多重継承の問題点<a class="zola-anchor" href="#多重継承の問題点" aria-label="Anchor link for: 多重継承の問題点"><i class="fas fa-link"></i></a> 
+</h3>
+<ul>
+<li>複数継承元での同一メソッドのconflict</li>
+<li>superがどの親を指しているか分かりづらい</li>
+</ul>
+<h2 id="mix-inの問題点">mix-inの問題点<a class="zola-anchor" href="#mix-inの問題点" aria-label="Anchor link for: mix-inの問題点"><i class="fas fa-link"></i></a> 
+</h2>
+<p>コードの再利用の手法としてClassの他にmix-inもよく使われるが、問題点がある</p>
+<ol>
+<li>mix-inした順序で同一名のメソッド内の実行順序が変わる</li>
+<li>glue codeがあちこちに散らばる</li>
+</ol>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>define mixin_double {
+</span><span>  super.property * 2 # &lt;- super.propertyはmix-inされる側のpropertyでmoduleのメソッド内でmix-in先と糊付けしている
+</span><span>}
+</span></code></pre>
+<h2 id="traitの構成要素">traitの構成要素<a class="zola-anchor" href="#traitの構成要素" aria-label="Anchor link for: traitの構成要素"><i class="fas fa-link"></i></a> 
+</h2>
+<ol>
+<li>(振る舞いを定義する)メソッドを実装する。実装を持つのでmix-in的な要素である</li>
+<li>Class側で実装が必要なメソッドの宣言をする。実装は持たないのでinterface的な要素である</li>
+<li>1のメソッドはtraitを付与される構造体(やclass)のpropertyにアクセスしない(glue codeの排除)</li>
+<li>複数traitが付与されていても付与している順序は意味を持たない</li>
+</ol>
+<ul>
+<li>複数traitで重複したメソッドがある場合は付与された側で呼び出すメソッドを決める(多重継承やmix-inの問題の解消)</li>
+</ul>
+<ol start="5">
+<li>traitは付与されたclassのsemanticsに影響しない</li>
+</ol>
+<ul>
+<li>traitに定義されているメソッドをtraitを付与されているclassにコピペして、traitを外しても同じ挙動になる</li>
+</ul>
+<h3 id="Rustの場合">Rustの場合<a class="zola-anchor" href="#Rustの場合" aria-label="Anchor link for: Rustの場合"><i class="fas fa-link"></i></a> 
+</h3>
+<p>Rustは1,2,3,4,5をすべて満たしているが、4の複数trait間での重複メソッドの解決においてtrait名を指定することで複数traitのメソッドを出し分けることができる(<a href="https://doc.rust-lang.org/book/ufcs.html">UniversalFunctionCallSyntax</a>)が、この手法は論文では非推奨な方法とされている</p>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/books/">books</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/trait/">trait</a></span>
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/rust/">Rust</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            

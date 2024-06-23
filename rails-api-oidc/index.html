@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="referrer" content="no-referrer">
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+        <title>railsをAPIサーバーとして使うときのOIDC認証 | k-ota&#x27;s weblog</title>
+<meta property="og:title" content="railsをAPIサーバーとして使うときのOIDC認証 | k-ota&#x27;s weblog" />
+<meta name="twitter:title" content="railsをAPIサーバーとして使うときのOIDC認証 | k-ota&#x27;s weblog" />
+
+        
+
+        <meta property="og:site_name" content="k-ota&#x27;s weblog" />
+        <meta property="og:url" content="https:&#x2F;&#x2F;k-ota.dev&#x2F;" />
+
+        
+
+
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://k-ota.dev/base.css" />
+        <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/fontawesome.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/brands.css" rel="stylesheet">
+        <link href="https://k-ota.dev/fontawesome/solid.css" rel="stylesheet">
+
+        <link rel='icon' type='image/x-icon' href="https://k-ota.dev/favicon.ico" />
+
+        
+
+        <link rel="stylesheet" href="https://k-ota.dev/page.css" />
+
+    </head>
+    <body>
+        <a href="#main" class="skip-link p-screen-reader-text">Skip to content</a>
+        <header class="l-header">
+            <h1 class="c-title p-title"><a href="https:&#x2F;&#x2F;k-ota.dev&#x2F;" class="p-title__link">k-ota&#x27;s weblog</a></h1>
+            </header>
+
+        <main id="main" class="l-main">
+            
+<article class="p-article">
+    <header>
+        <h1>railsをAPIサーバーとして使うときのOIDC認証</h1>
+        <div>
+            <div class="c-time">
+
+                <time datetime="2022-01-08">
+                    2022-01-08
+                </time>
+                
+                 - (4 min read)
+            </div>
+        </div>
+    </header>
+    <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">Contents</h2>
+        <div class="post-toc-content always-active">
+            <nav id="TableOfContents">
+                <ul>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/rails-api-oidc/#やりたいこと" class="toc-link">
+    やりたいこと
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/rails-api-oidc/#OIDC認証する" class="toc-link">
+    OIDC認証する
+</a>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/rails-api-oidc/#エンドポイントを生やす" class="toc-link">
+    エンドポイントを生やす
+</a>
+                        
+                        <ul>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/rails-api-oidc/#SPAからログイン済みかどうか確認するためのAPI" class="toc-link">
+    SPAからログイン済みかどうか確認するためのAPI
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/rails-api-oidc/#OIDC認証するためのpath" class="toc-link">
+    OIDC認証するためのpath
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/rails-api-oidc/#OIDC認証後のredirect" class="toc-link">
+    OIDC認証後のredirect
+</a>
+                            </li>
+                            
+                            <li>
+                                <a href="https://k-ota.dev/rails-api-oidc/#CSRF対策" class="toc-link">
+    CSRF対策
+</a>
+                            </li>
+                            
+                        </ul>
+                        
+                    </li>
+                    
+                    <li>
+                        <a href="https://k-ota.dev/rails-api-oidc/#おまけ:_SPAとAPIサーバーが別ドメインの場合" class="toc-link">
+    おまけ: SPAとAPIサーバーが別ドメインの場合
+</a>
+                        
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <section id="js-article" class="p-article__body">
+        
+    <h2 id="やりたいこと">やりたいこと<a class="zola-anchor" href="#やりたいこと" aria-label="Anchor link for: やりたいこと"><i class="fas fa-link"></i></a> 
+</h2>
+<ul>
+<li>railsでOIDC認証したい</li>
+<li>railsをAPIサーバーとして使ったときにもOIDC認証したい
+<ul>
+<li>認証フローはcode grantにする</li>
+<li>認証情報はsessionに入れる</li>
+</ul>
+</li>
+</ul>
+<h2 id="OIDC認証する">OIDC認証する<a class="zola-anchor" href="#OIDC認証する" aria-label="Anchor link for: OIDC認証する"><i class="fas fa-link"></i></a> 
+</h2>
+<p><a href="https://github.com/omniauth/omniauth_openid_connect">OIDC用のgem</a> を使う
+READMEを参考に設定を行う。</p>
+<ul>
+<li>認証フローをcode grantにするため<code>response_type</code>は<code>:code</code>とする。</li>
+<li><code>callback_path</code>はOIDC認証後にredirectするURLで、たとえば<code>/auth/openid_connect</code>としておく(<a href="https://k-ota.dev/rails-api-oidc/#OIDC%E8%AA%8D%E8%A8%BC%E5%BE%8C%E3%81%AEredirect">後述</a>)</li>
+</ul>
+<h2 id="エンドポイントを生やす">エンドポイントを生やす<a class="zola-anchor" href="#エンドポイントを生やす" aria-label="Anchor link for: エンドポイントを生やす"><i class="fas fa-link"></i></a> 
+</h2>
+<h3 id="SPAからログイン済みかどうか確認するためのAPI">SPAからログイン済みかどうか確認するためのAPI<a class="zola-anchor" href="#SPAからログイン済みかどうか確認するためのAPI" aria-label="Anchor link for: SPAからログイン済みかどうか確認するためのAPI"><i class="fas fa-link"></i></a> 
+</h3>
+<p>未ログインの場合は<a href="https://k-ota.dev/rails-api-oidc/#OIDC%E8%AA%8D%E8%A8%BC%E3%81%99%E3%82%8B%E3%81%9F%E3%82%81%E3%81%AEpath">ログイン用のpath</a>に遷移する</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># config/routes.rb
+</span><span>get &#39;</span><span style="color:#a3be8c;">spa_logged_in</span><span>&#39; =&gt; &#39;</span><span style="color:#a3be8c;">sessions#spa_logged_in</span><span>&#39;
+</span><span>
+</span><span style="color:#65737e;"># app/controllers/sessions_controller.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">SessionsController </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationController
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">spa_logged_in
+</span><span>    </span><span style="color:#b48ead;">if</span><span> session[</span><span style="color:#a3be8c;">:spa_login</span><span>].present?
+</span><span>      render </span><span style="color:#a3be8c;">json: </span><span style="color:#d08770;">true
+</span><span>    </span><span style="color:#b48ead;">else
+</span><span>      render </span><span style="color:#a3be8c;">json: </span><span style="color:#d08770;">false
+</span><span>    </span><span style="color:#b48ead;">end
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h3 id="OIDC認証するためのpath">OIDC認証するためのpath<a class="zola-anchor" href="#OIDC認証するためのpath" aria-label="Anchor link for: OIDC認証するためのpath"><i class="fas fa-link"></i></a> 
+</h3>
+<p>OIDC認証後に元いたページにredirectするためにreferrer情報をsessionに保存しておく</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># config/routes.rb
+</span><span>get &#39;</span><span style="color:#a3be8c;">spa_new</span><span>&#39; =&gt; &#39;</span><span style="color:#a3be8c;">sessions#spa_new</span><span>&#39;
+</span><span>
+</span><span style="color:#65737e;"># app/controllers/sessions_controller.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">SessionsController </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationController
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">graphql_new
+</span><span>    session[</span><span style="color:#a3be8c;">:return_to</span><span>] = request.referer
+</span><span>    &#39;</span><span style="color:#a3be8c;">/auth/openid_connect</span><span>&#39;
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h3 id="OIDC認証後のredirect">OIDC認証後のredirect<a class="zola-anchor" href="#OIDC認証後のredirect" aria-label="Anchor link for: OIDC認証後のredirect"><i class="fas fa-link"></i></a> 
+</h3>
+<p>OIDC認証後に認証済みであることをsessionに登録し、元いたページにredirectする</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># config/routes.rb
+</span><span>get &#39;</span><span style="color:#a3be8c;">spa_callback</span><span>&#39; =&gt; &#39;</span><span style="color:#a3be8c;">sessions#spa_callback</span><span>&#39;
+</span><span>
+</span><span>
+</span><span style="color:#65737e;"># app/controllers/sessions_controller.rb
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">SessionsController </span><span style="color:#eff1f5;">&lt; </span><span style="color:#a3be8c;">ApplicationController
+</span><span>  </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">spa_callback
+</span><span>    session[</span><span style="color:#a3be8c;">:spa_login</span><span>] = </span><span style="color:#d08770;">true
+</span><span>    return_to = session[</span><span style="color:#a3be8c;">:return_to</span><span>]
+</span><span>    session.delete(</span><span style="color:#a3be8c;">:return_to</span><span>) </span><span style="color:#b48ead;">if</span><span> session.key?(</span><span style="color:#a3be8c;">:return_to</span><span>)
+</span><span>    redirect_to return_to
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span></code></pre>
+<h3 id="CSRF対策">CSRF対策<a class="zola-anchor" href="#CSRF対策" aria-label="Anchor link for: CSRF対策"><i class="fas fa-link"></i></a> 
+</h3>
+<p>APIのレスポンスを生成する過程で</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span>response.set_header(&#39;</span><span style="color:#a3be8c;">my_application_csrf_token</span><span>&#39;, form_authenticity_token)
+</span></code></pre>
+<p>を設定してあげる。もしCORS環境の場合はjsのfetch apiから取得できるheader情報に制限があるので</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span>response.set_header(&#39;</span><span style="color:#a3be8c;">Access-Control-Expose-Headers</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">my_application_csrf_token</span><span>&#39;)
+</span></code></pre>
+<p>も追加で必要。jsは</p>
+<pre data-lang="javascript" style="background-color:#2b303b;color:#c0c5ce;" class="language-javascript "><code class="language-javascript" data-lang="javascript"><span style="color:#8fa1b3;">fetch</span><span>(</span><span style="color:#bf616a;">url</span><span>, {credentials: &#39;</span><span style="color:#a3be8c;">include</span><span>&#39;}).</span><span style="color:#96b5b4;">then</span><span>(
+</span><span>  </span><span style="color:#bf616a;">response </span><span style="color:#b48ead;">=&gt; </span><span>{ </span><span style="color:#b48ead;">return </span><span>{ response: </span><span style="color:#bf616a;">response</span><span>.</span><span style="color:#8fa1b3;">json</span><span>(), csrf_token: </span><span style="color:#bf616a;">res</span><span>.headers.</span><span style="color:#96b5b4;">get</span><span>(&quot;</span><span style="color:#a3be8c;">my_application_csrf_token</span><span>&quot;) } }
+</span><span>)
+</span></code></pre>
+<p>のようにしてcallする</p>
+<h2 id="おまけ:_SPAとAPIサーバーが別ドメインの場合">おまけ: SPAとAPIサーバーが別ドメインの場合<a class="zola-anchor" href="#おまけ:_SPAとAPIサーバーが別ドメインの場合" aria-label="Anchor link for: おまけ:_SPAとAPIサーバーが別ドメインの場合"><i class="fas fa-link"></i></a> 
+</h2>
+<p>cross originでcookieを使ったsession管理はブラウザの制約が厳しかったり失敗したときにリスクが大きいので注意。<a href="https://www.slideshare.net/ockeghem/phpconf2021spasecurity">徳丸さんの発表資料</a>が参考になる</p>
+<p>徳丸さんの資料では他のライブラリではCORSでcookieを共有できる<code>credentials: true</code>相当のを設定をしたときに、デフォルトだとすべてのoriginで有効になってしまう、とされている。
+<a href="https://github.com/cyu/rack-cors">rack-cors</a>のREADMEでは<code>If a wildcard (*) origin is specified, this option cannot be set to true</code>と書かれており、cookie共有するときは必ずoriginを設定しなければならないように読めるので、その心配はなさそう(未確認)。</p>
+<pre data-lang="ruby" style="background-color:#2b303b;color:#c0c5ce;" class="language-ruby "><code class="language-ruby" data-lang="ruby"><span style="color:#65737e;"># Gemfile
+</span><span style="color:#8fa1b3;">gem </span><span>&#39;</span><span style="color:#a3be8c;">rack-cors</span><span>&#39;
+</span><span>
+</span><span style="color:#65737e;"># config/initializers/cors.rb
+</span><span style="color:#ebcb8b;">Rails</span><span>.application.config.middleware.insert_before </span><span style="color:#d08770;">0</span><span>, </span><span style="color:#ebcb8b;">Rack</span><span>::Cors </span><span style="color:#b48ead;">do
+</span><span>  allow </span><span style="color:#b48ead;">do
+</span><span>    origins &#39;</span><span style="color:#a3be8c;">http://localhost:8080</span><span>&#39;, %r{</span><span style="color:#96b5b4;">https://my-domain(\.test)?\.com</span><span>}
+</span><span>    resource &#39;</span><span style="color:#a3be8c;">*</span><span>&#39;, </span><span style="color:#a3be8c;">headers: :any</span><span>, </span><span style="color:#a3be8c;">methods: </span><span>%i[</span><span style="color:#a3be8c;">get post patch put</span><span>], </span><span style="color:#a3be8c;">credentials: </span><span style="color:#d08770;">true
+</span><span>  </span><span style="color:#b48ead;">end
+</span><span style="color:#b48ead;">end
+</span><span>
+</span></code></pre>
+
+
+    </section>
+    <footer>
+        <nav class="c-pagination p-pagination">
+            <div class="c-pagination__ctrl">
+                <div class="c-pagination__newer">
+                    
+                </div>
+                <div class="c-pagination__older">
+                    
+                </div>
+            </div>
+        </nav>
+    </footer>
+</article>
+        </main>
+
+     
+      <footer class="l-footer">
+          
+        <p class="tags">
+              
+                  
+                  <span><a href="https://k-ota.dev/tags/ruby-on-rails/">Ruby on Rails</a></span>
+              
+            </p>
+    
+<p class="p-copyright">
+    
+</p>
+      </footer>
+
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-172917470-1"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-172917470-1');
+      </script> 
+      <link rel="stylesheet" href="https://k-ota.dev/css/katex.min.css">
+      <script defer src="https://k-ota.dev/js/katex.min.js"></script>
+      <script defer src="https://k-ota.dev/js/mathtex-script-type.min.js"></script>
+    </body>
+</html>
+            
